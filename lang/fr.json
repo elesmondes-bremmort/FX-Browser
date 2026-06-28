@@ -6,6 +6,7 @@
   "fx-browser.errors.noScene": "Aucune scene active n'est disponible pour placer une Tile.",
   "fx-browser.errors.overlayCreate": "FX Browser n'a pas pu creer le FX Overlay.",
   "fx-browser.errors.tileCreate": "FX Browser n'a pas pu creer la Tile.",
+  "fx-browser.errors.windowToggle": "FX Browser n'a pas pu ouvrir ou fermer sa fenetre.",
   "fx-browser.placement.alpha": "Opacite",
   "fx-browser.placement.elevation": "Elevation",
   "fx-browser.placement.height": "Hauteur",

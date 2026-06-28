@@ -6,7 +6,7 @@ import { FXOverlayControls } from "./overlayControls.js";
 import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
 import { FXBrowserSettings } from "./settings.js";
-import { clampNumber, localize, notify } from "./utils.js";
+import { clampNumber, debugLog, localize, notify } from "./utils.js";
 
 export class FXBrowserApp extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   static DEFAULT_OPTIONS = {
@@ -162,19 +162,26 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.render({ force: true });
   }
 
-  static toggle() {
+  static async toggle() {
     if (!game.user?.isGM) {
       notify(localize("errors.gmOnly"), "warn");
       return;
     }
 
-    if (FXBrowserApp.instance?.rendered) {
-      FXBrowserApp.instance.close();
-      return;
-    }
+    try {
+      if (FXBrowserApp.instance?.rendered) {
+        await FXBrowserApp.instance.close();
+        debugLog("window closed");
+        return;
+      }
 
-    FXBrowserApp.instance = new FXBrowserApp();
-    FXBrowserApp.instance.render({ force: true });
+      FXBrowserApp.instance = FXBrowserApp.instance ?? new FXBrowserApp();
+      await FXBrowserApp.instance.render({ force: true });
+      debugLog("window opened");
+    } catch (error) {
+      console.error("FX Browser | Failed to toggle browser window", error);
+      notify(game.i18n.localize("fx-browser.errors.windowToggle"), "error");
+    }
   }
 }
 

@@ -9,6 +9,10 @@ export function notify(message, type = "info") {
   ui.notifications?.[uiType]?.(message);
 }
 
+export function debugLog(...args) {
+  if (CONFIG?.debug?.[MODULE_ID]) console.debug("FX Browser |", ...args);
+}
+
 export function asArray(value) {
   return Array.isArray(value) ? value : [];
 }

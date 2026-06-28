@@ -5,8 +5,10 @@ import { FXOverlayLayer } from "./overlayLayer.js";
 import { FXOverlayRenderer } from "./overlayRenderer.js";
 import { FXSyncManager } from "./syncManager.js";
 import { FXBrowserSettings } from "./settings.js";
+import { debugLog } from "./utils.js";
 
 Hooks.once("init", () => {
+  debugLog("module initialized");
   FXBrowserSettings.register();
   FXSyncManager.register();
   FXOverlayLayer.register();
@@ -25,14 +27,13 @@ Hooks.once("ready", async () => {
   await FXAssetScanner.scan({ notifyResult: false });
 });
 
-Hooks.on("renderSceneControls", () => {
+Hooks.on("getSceneControlButtons", (controls) => {
   if (!game.user?.isGM) return;
-  ensureDockButton();
-});
-
-Hooks.on("renderSidebar", () => {
-  if (!game.user?.isGM) return;
-  ensureDockButton();
+  try {
+    addCanvasControlButton(controls);
+  } catch (error) {
+    console.error("FX Browser | Failed to add canvas control button", error);
+  }
 });
 
 Hooks.on("fxBrowserOverlaySceneChanged", () => {
@@ -45,19 +46,62 @@ Hooks.on("fxBrowserOverlaySelected", (id) => {
   FXBrowserApp.instance.refreshOverlays();
 });
 
-function ensureDockButton() {
-  if (document.getElementById("fx-browser-dock-button")) return;
+function addCanvasControlButton(controls) {
+  if (!controls) {
+    debugLog("canvas controls unavailable");
+    return;
+  }
 
-  const target = document.querySelector("#ui-right") ?? document.querySelector("#controls") ?? document.body;
-  const button = document.createElement("button");
-  button.id = "fx-browser-dock-button";
-  button.type = "button";
-  button.className = "fx-browser-dock-button";
-  button.title = "FX Browser";
-  button.setAttribute("aria-label", "FX Browser");
-  button.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i>`;
-  button.addEventListener("click", () => FXBrowserApp.toggle());
-  target.appendChild(button);
+  const button = {
+    name: "fx-browser",
+    title: "FX Browser",
+    icon: "fa-solid fa-wand-magic-sparkles",
+    button: true,
+    visible: game.user?.isGM,
+    onClick: () => {
+      debugLog("canvas control click received");
+      FXBrowserApp.toggle();
+    }
+  };
+
+  if (Array.isArray(controls)) {
+    if (controls.some((control) => control.name === button.name)) return;
+    controls.push({
+      name: button.name,
+      title: button.title,
+      icon: button.icon,
+      layer: "tiles",
+      tools: [button],
+      activeTool: button.name
+    });
+    debugLog("canvas control button added");
+    return;
+  }
+
+  if (controls instanceof Map) {
+    if (controls.has(button.name)) return;
+    controls.set(button.name, {
+      name: button.name,
+      title: button.title,
+      icon: button.icon,
+      layer: "tiles",
+      tools: new Map([[button.name, button]]),
+      activeTool: button.name
+    });
+    debugLog("canvas control button added");
+    return;
+  }
+
+  if (controls?.[button.name]) return;
+  controls[button.name] = {
+    name: button.name,
+    title: button.title,
+    icon: button.icon,
+    layer: "tiles",
+    tools: { [button.name]: button },
+    activeTool: button.name
+  };
+  debugLog("canvas control button added");
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {
