@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Petit feu",
+    "category": "Fire",
+    "path": "",
+    "width": 2,
+    "height": 2,
+    "alpha": 1,
+    "rotation": 0,
+    "loop": true,
+    "elevation": 0
+  },
+  {
+    "name": "Fumee",
+    "category": "Smoke",
+    "path": "",
+    "width": 3,
+    "height": 3,
+    "alpha": 0.75,
+    "rotation": 0,
+    "loop": true,
+    "elevation": 0
+  },
+  {
+    "name": "Portail",
+    "category": "Portal",
+    "path": "",
+    "width": 3,
+    "height": 3,
+    "alpha": 1,
+    "rotation": 0,
+    "loop": true,
+    "elevation": 0
+  }
+]

@@ -1,0 +1,67 @@
+.fx-browser-grid {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  align-content: start;
+  gap: 10px;
+  padding: 10px;
+}
+
+.fx-browser-card {
+  overflow: hidden;
+  cursor: grab;
+  background: #211d19;
+  border: 1px solid rgb(215 180 95 / 24%);
+  border-radius: 6px;
+}
+
+.fx-browser-card:active {
+  cursor: grabbing;
+}
+
+.fx-browser-card-media {
+  aspect-ratio: 16 / 9;
+  background-color: #111;
+  background-image:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
+.fx-browser-card video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fx-browser-card-body {
+  padding: 8px;
+}
+
+.fx-browser-card h3 {
+  min-height: 34px;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  color: #f4ead7;
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.fx-browser-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.fx-browser-card-badges span {
+  padding: 2px 6px;
+  color: #f8e9bf;
+  background: rgb(215 180 95 / 16%);
+  border: 1px solid rgb(215 180 95 / 28%);
+  border-radius: 999px;
+  font-size: 11px;
+}

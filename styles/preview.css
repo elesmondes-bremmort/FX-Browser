@@ -1,0 +1,63 @@
+.fx-browser-preview-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+  background: #181513;
+  border-left: 1px solid rgb(215 180 95 / 18%);
+}
+
+.fx-browser-preview-stage {
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  background-color: #101010;
+  background-image:
+    linear-gradient(45deg, #303030 25%, transparent 25%),
+    linear-gradient(-45deg, #303030 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #303030 75%),
+    linear-gradient(-45deg, transparent 75%, #303030 75%);
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  background-size: 20px 20px;
+  border: 1px solid #4b3b23;
+  border-radius: 6px;
+}
+
+.fx-browser-preview-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fx-browser-preview-empty {
+  height: 100%;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  color: var(--fx-muted);
+  text-align: center;
+}
+
+.fx-browser-preview-actions {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.fx-browser-preview-meta {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 6px 10px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.fx-browser-preview-meta dt {
+  color: var(--fx-muted);
+}
+
+.fx-browser-preview-meta dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}

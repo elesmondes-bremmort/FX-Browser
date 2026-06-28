@@ -1,0 +1,67 @@
+<div class="fx-browser-shell">
+  <header class="fx-browser-topbar">
+    <div class="fx-browser-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="search" data-search value="{{query}}" placeholder="{{localize 'fx-browser.search.placeholder'}}" autocomplete="off">
+    </div>
+    <button type="button" data-action="rescan">
+      <i class="fa-solid fa-rotate"></i>
+      {{localize "fx-browser.actions.rescan"}}
+    </button>
+  </header>
+
+  <div class="fx-browser-content">
+    <nav class="fx-browser-categories" aria-label="{{localize 'fx-browser.categories.label'}}">
+      {{#each categories}}
+        <button type="button" class="{{#if active}}active{{/if}}" data-action="selectCategory" data-category="{{id}}">
+          {{label}}
+        </button>
+      {{/each}}
+    </nav>
+
+    <main class="fx-browser-grid" aria-live="polite">
+      {{#if hasAssets}}
+        {{#each assets}}
+          {{> "modules/fx-browser/templates/asset-card.hbs" this}}
+        {{/each}}
+      {{else}}
+        <div class="fx-browser-empty">{{emptyMessage}}</div>
+      {{/if}}
+    </main>
+
+    <aside class="fx-browser-preview-panel">
+      <div data-preview></div>
+    </aside>
+  </div>
+
+  <footer class="fx-browser-placement">
+    <label>
+      <span>{{localize "fx-browser.placement.width"}}</span>
+      <input data-placement name="width" type="number" min="0.25" max="20" step="0.25" value="{{placement.width}}">
+    </label>
+    <label>
+      <span>{{localize "fx-browser.placement.height"}}</span>
+      <input data-placement name="height" type="number" min="0.25" max="20" step="0.25" value="{{placement.height}}">
+    </label>
+    <label>
+      <span>{{localize "fx-browser.placement.alpha"}}</span>
+      <input data-placement name="alpha" type="number" min="0" max="1" step="0.05" value="{{placement.alpha}}">
+    </label>
+    <label>
+      <span>{{localize "fx-browser.placement.rotation"}}</span>
+      <input data-placement name="rotation" type="number" min="-360" max="360" step="1" value="{{placement.rotation}}">
+    </label>
+    <label>
+      <span>{{localize "fx-browser.placement.elevation"}}</span>
+      <input data-placement name="elevation" type="number" step="1" value="{{placement.elevation}}">
+    </label>
+    <label class="fx-browser-placement-name">
+      <span>{{localize "fx-browser.placement.name"}}</span>
+      <input data-placement name="name" type="text" value="{{placement.name}}">
+    </label>
+    <label class="fx-browser-loop">
+      <input data-placement name="loop" type="checkbox" {{#if placement.loop}}checked{{/if}}>
+      <span>{{localize "fx-browser.placement.loop"}}</span>
+    </label>
+  </footer>
+</div>
