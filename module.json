@@ -2,7 +2,7 @@
   "id": "fx-browser",
   "title": "FX Browser",
   "description": "Browse, preview, search, and drop animated WebM effects as tiles.",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "compatibility": {
     "minimum": "13",
     "verified": "13"
@@ -34,8 +34,8 @@
       "path": "lang/fr.json"
     }
   ],
-  "url": "",
-  "manifest": "",
-  "download": "",
+  "url": "https://github.com/elesmondes-bremmort/FX-Browser",
+  "manifest": "https://raw.githubusercontent.com/elesmondes-bremmort/FX-Browser/main/module.json",
+  "download": "https://github.com/elesmondes-bremmort/FX-Browser/archive/refs/heads/main.zip",
   "license": "MIT"
 }
