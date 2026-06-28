@@ -1,4 +1,4 @@
-import { FXTileCreator } from "./tileCreator.js";
+import { FXOverlayManager } from "./overlayManager.js";
 
 export class FXDragDrop {
   constructor(getAssetById) {
@@ -40,7 +40,7 @@ export class FXDragDrop {
 
     event.preventDefault();
     const asset = this.getAssetById(payload.id) ?? payload;
-    await FXTileCreator.createFromDrop(asset, event);
+    await FXOverlayManager.createFromAsset(asset, event);
   }
 
   #readPayload(event) {

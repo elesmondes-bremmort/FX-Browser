@@ -9,6 +9,12 @@ export const SETTINGS = {
   LAST_SCAN: "lastScan"
 };
 
+export const FLAGS = {
+  SCOPE: MODULE_ID,
+  IS_OVERLAY: "isOverlay",
+  DATA: "overlayData"
+};
+
 export const DEFAULT_WINDOW_STATE = {
   width: 1120,
   height: 720,
@@ -22,7 +28,10 @@ export const DEFAULT_PLACEMENT = {
   alpha: 1,
   rotation: 0,
   loop: true,
+  visible: true,
+  locked: false,
   elevation: 0,
+  zIndex: 0,
   name: ""
 };
 
@@ -36,3 +45,4 @@ export const JB2A_DIRECTORIES = [
 ];
 
 export const EMPTY_LIBRARY_MESSAGE = "Aucune bibliothèque d'effets détectée.";
+export const MISSING_ASSET_MESSAGE = "FX introuvable ou inaccessible.";

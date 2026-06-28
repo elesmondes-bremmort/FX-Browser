@@ -1,14 +1,22 @@
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXBrowserApp } from "./browser.js";
 import { MODULE_ID } from "./constants.js";
+import { FXOverlayLayer } from "./overlayLayer.js";
+import { FXOverlayRenderer } from "./overlayRenderer.js";
+import { FXSyncManager } from "./syncManager.js";
 import { FXBrowserSettings } from "./settings.js";
 
 Hooks.once("init", () => {
   FXBrowserSettings.register();
+  FXSyncManager.register();
+  FXOverlayLayer.register();
+  FXOverlayRenderer.register();
   loadTemplates([
     "modules/fx-browser/templates/asset-card.hbs",
     "modules/fx-browser/templates/preview.hbs",
-    "modules/fx-browser/templates/settings.hbs"
+    "modules/fx-browser/templates/settings.hbs",
+    "modules/fx-browser/templates/overlay-list.hbs",
+    "modules/fx-browser/templates/overlay-controls.hbs"
   ]);
 });
 
@@ -25,6 +33,16 @@ Hooks.on("renderSceneControls", () => {
 Hooks.on("renderSidebar", () => {
   if (!game.user?.isGM) return;
   ensureDockButton();
+});
+
+Hooks.on("fxBrowserOverlaySceneChanged", () => {
+  FXBrowserApp.instance?.refreshOverlays?.();
+});
+
+Hooks.on("fxBrowserOverlaySelected", (id) => {
+  if (!FXBrowserApp.instance?.rendered) return;
+  FXBrowserApp.instance.selectedOverlayId = id;
+  FXBrowserApp.instance.refreshOverlays();
 });
 
 function ensureDockButton() {

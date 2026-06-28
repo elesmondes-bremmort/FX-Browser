@@ -19,7 +19,8 @@
     "styles/fx-browser.css",
     "styles/cards.css",
     "styles/preview.css",
-    "styles/controls.css"
+    "styles/controls.css",
+    "styles/overlays.css"
   ],
   "languages": [
     {

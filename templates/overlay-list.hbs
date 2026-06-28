@@ -1,0 +1,25 @@
+<section class="fx-browser-overlay-list">
+  <h2>{{localize "fx-browser.overlays.title"}}</h2>
+  {{#if overlays.length}}
+    <div class="fx-browser-overlay-items">
+      {{#each overlays}}
+        <div class="fx-browser-overlay-row">
+          <span title="{{assetPath}}">{{name}}</span>
+          <span>{{#if visible}}{{localize "fx-browser.overlays.visible"}}{{else}}{{localize "fx-browser.overlays.hidden"}}{{/if}}</span>
+          <span>{{#if locked}}{{localize "fx-browser.overlays.locked"}}{{else}}{{localize "fx-browser.overlays.unlocked"}}{{/if}}</span>
+          <button type="button" title="{{localize 'fx-browser.overlays.select'}}" data-overlay-select="{{id}}">
+            <i class="fa-solid fa-crosshairs"></i>
+          </button>
+          <button type="button" title="{{localize 'fx-browser.overlays.edit'}}" data-overlay-edit="{{id}}">
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+          <button type="button" title="{{localize 'fx-browser.overlays.delete'}}" data-overlay-delete="{{id}}">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      {{/each}}
+    </div>
+  {{else}}
+    <p>{{localize "fx-browser.overlays.empty"}}</p>
+  {{/if}}
+</section>

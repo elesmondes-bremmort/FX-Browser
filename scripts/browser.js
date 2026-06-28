@@ -1,7 +1,9 @@
 import { CATEGORIES } from "./categories.js";
-import { DEFAULT_WINDOW_STATE, EMPTY_LIBRARY_MESSAGE, MODULE_ID } from "./constants.js";
+import { DEFAULT_WINDOW_STATE, EMPTY_LIBRARY_MESSAGE } from "./constants.js";
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
+import { FXOverlayControls } from "./overlayControls.js";
+import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
 import { FXBrowserSettings } from "./settings.js";
 import { clampNumber, localize, notify } from "./utils.js";
@@ -37,15 +39,22 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.category = "all";
     this.query = "";
     this.preview = null;
+    this.selectedOverlayId = null;
     this.dragDrop = new FXDragDrop((id) => this.assets.find((asset) => asset.id === id));
     this.dragDrop.bindCanvasDrop();
   }
 
   async _prepareContext() {
     this.#filterAssets();
+    const overlays = FXOverlayManager.getOverlays();
+    const selectedOverlay = overlays.find((overlay) => overlay.id === this.selectedOverlayId) ?? overlays[0] ?? null;
+    this.selectedOverlayId = selectedOverlay?.id ?? null;
+
     return {
       categories: CATEGORIES.map((category) => ({ ...category, active: category.id === this.category })),
       assets: this.filteredAssets,
+      overlays,
+      selectedOverlay,
       selectedAsset: this.selectedAsset,
       placement: FXBrowserSettings.getPlacement(),
       emptyMessage: EMPTY_LIBRARY_MESSAGE,
@@ -60,6 +69,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview = new FXPreview(root);
     this.preview.render(this.selectedAsset);
     this.preview.activateListeners();
+    new FXOverlayControls(root, (id) => {
+      this.selectedOverlayId = id;
+      this.render({ force: true });
+    }).activate(this.selectedOverlayId);
 
     root.querySelector("[data-search]")?.addEventListener("input", (event) => {
       this.query = event.currentTarget.value;
@@ -113,7 +126,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       rotation: clampNumber(get("rotation")?.value, -360, 360, 0),
       loop: Boolean(get("loop")?.checked),
       elevation: clampNumber(get("elevation")?.value, -9999, 9999, 0),
-      name: get("name")?.value ?? ""
+      name: get("name")?.value ?? "",
+      visible: Boolean(get("visible")?.checked),
+      locked: Boolean(get("locked")?.checked),
+      zIndex: clampNumber(get("zIndex")?.value, -9999, 9999, 0)
     });
   }
 
@@ -134,6 +150,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   static async #onRescan() {
     this.assets = await FXAssetScanner.scan();
     this.selectedAsset = this.assets[0] ?? null;
+    this.render({ force: true });
+  }
+
+  refreshOverlays() {
     this.render({ force: true });
   }
 

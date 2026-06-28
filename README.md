@@ -1,8 +1,8 @@
 # FX Browser
 
-FX Browser is a Foundry VTT v13 module for GMs who want to browse, search, preview, and drag animated `.webm` effects onto a scene as Tiles.
+FX Browser is a Foundry VTT v13 module for GMs who want to browse, search, preview, and drag animated `.webm` effects onto a scene as synchronized FX Overlays.
 
-The first version focuses on JB2A-style animated assets and custom folders. It does not require Sequencer or FXMaster.
+The first version focuses on JB2A-style animated assets and custom folders. It does not require Sequencer or FXMaster. Internally, FX Browser uses native Foundry Tile documents with module flags so overlays persist in the scene and synchronize to connected players.
 
 ## Features
 
@@ -15,8 +15,10 @@ The first version focuses on JB2A-style animated assets and custom folders. It d
 - Automatic categories such as Fire, Smoke, Magic, Explosion, Portal, Rune, Aura, and Other.
 - Animated card thumbnails and large checkerboard preview.
 - Play/Pause and Restart controls.
-- Placement settings for width, height, opacity, rotation, loop, elevation, and tile name.
-- Drag and drop to the canvas to create a Tile at the drop position.
+- Placement settings for width, height, opacity, rotation, loop, visibility, lock state, z-index, elevation, and overlay name.
+- Drag and drop to the canvas to create an FX Overlay at the drop position.
+- Scene FX list with select, edit, and delete actions.
+- Editor for X, Y, width, height, rotation, opacity, loop, visibility, lock state, and z-index.
 
 ## Installation
 
@@ -35,7 +37,7 @@ worlds/my-world/assets/fx
 
 ## Robustness
 
-Missing JB2A folders, invalid custom folders, deleted WebM files, no active scene, or an unready canvas should show a notification instead of blocking play.
+Missing JB2A folders, invalid custom folders, deleted WebM files, no active scene, or an unready canvas should show a notification instead of blocking play. Players see FX Overlays through Foundry synchronization, but only GMs can create, edit, or delete them.
 
 ## Version
 

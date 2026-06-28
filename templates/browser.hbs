@@ -31,6 +31,8 @@
 
     <aside class="fx-browser-preview-panel">
       <div data-preview></div>
+      {{> "modules/fx-browser/templates/overlay-list.hbs"}}
+      {{> "modules/fx-browser/templates/overlay-controls.hbs"}}
     </aside>
   </div>
 
@@ -55,6 +57,10 @@
       <span>{{localize "fx-browser.placement.elevation"}}</span>
       <input data-placement name="elevation" type="number" step="1" value="{{placement.elevation}}">
     </label>
+    <label>
+      <span>{{localize "fx-browser.placement.zIndex"}}</span>
+      <input data-placement name="zIndex" type="number" step="1" value="{{placement.zIndex}}">
+    </label>
     <label class="fx-browser-placement-name">
       <span>{{localize "fx-browser.placement.name"}}</span>
       <input data-placement name="name" type="text" value="{{placement.name}}">
@@ -62,6 +68,14 @@
     <label class="fx-browser-loop">
       <input data-placement name="loop" type="checkbox" {{#if placement.loop}}checked{{/if}}>
       <span>{{localize "fx-browser.placement.loop"}}</span>
+    </label>
+    <label class="fx-browser-loop">
+      <input data-placement name="visible" type="checkbox" {{#if placement.visible}}checked{{/if}}>
+      <span>{{localize "fx-browser.placement.visible"}}</span>
+    </label>
+    <label class="fx-browser-loop">
+      <input data-placement name="locked" type="checkbox" {{#if placement.locked}}checked{{/if}}>
+      <span>{{localize "fx-browser.placement.locked"}}</span>
     </label>
   </footer>
 </div>

@@ -1,0 +1,108 @@
+.fx-browser-overlay-list,
+.fx-browser-overlay-controls {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(215 180 95 / 18%);
+}
+
+.fx-browser-overlay-list h2,
+.fx-browser-overlay-controls h2 {
+  margin: 0 0 8px;
+  color: #f4d78b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fx-browser-overlay-list p,
+.fx-browser-overlay-controls p {
+  margin: 0;
+  color: var(--fx-muted);
+  font-size: 12px;
+}
+
+.fx-browser-overlay-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fx-browser-overlay-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 46px 54px 28px 28px 28px;
+  gap: 4px;
+  align-items: center;
+  padding: 5px;
+  background: #211d19;
+  border: 1px solid rgb(215 180 95 / 18%);
+  border-radius: 5px;
+  font-size: 11px;
+}
+
+.fx-browser-overlay-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-browser-overlay-row button,
+.fx-browser-overlay-controls button {
+  height: 26px;
+  color: var(--fx-text);
+  background: var(--fx-panel-soft);
+  border: 1px solid #5c4726;
+  border-radius: 5px;
+}
+
+.fx-browser-overlay-controls form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fx-browser-overlay-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--fx-muted);
+  font-size: 11px;
+}
+
+.fx-browser-overlay-controls input[type="text"],
+.fx-browser-overlay-controls input[type="number"] {
+  width: 100%;
+  height: 27px;
+  color: var(--fx-text);
+  background: #0f0e0d;
+  border: 1px solid #4b3b23;
+  border-radius: 5px;
+}
+
+.fx-browser-overlay-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.fx-browser-overlay-toggles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.fx-browser-overlay-toggles label {
+  min-height: 28px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  color: var(--fx-text);
+  background: #0f0e0d;
+  border: 1px solid #4b3b23;
+  border-radius: 5px;
+}
+
+.fx-browser-overlay-controls .fx-browser-danger {
+  color: #ffd8d8;
+  border-color: #7d3434;
+  background: #3a1717;
+}
