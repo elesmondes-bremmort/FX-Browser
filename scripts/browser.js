@@ -83,6 +83,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       const asset = this.assets.find((item) => item.id === card.dataset.assetId);
       if (!asset) return;
       this.dragDrop.activateCard(card, asset);
+      this.#activateHoverPreview(card);
       card.addEventListener("click", () => {
         this.selectedAsset = asset;
         this.render({ force: true });
@@ -92,6 +93,33 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     root.querySelectorAll("[data-placement]").forEach((input) => {
       input.addEventListener("change", () => this.#savePlacement(root));
       input.addEventListener("input", () => this.#savePlacement(root));
+    });
+  }
+
+  #activateHoverPreview(card) {
+    const media = card.querySelector(".fx-browser-card-media");
+    const src = card.dataset.previewSrc;
+    if (!media || !src) return;
+
+    card.addEventListener("mouseenter", () => {
+      if (media.querySelector("video")) return;
+      const video = document.createElement("video");
+      video.src = src;
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      media.replaceChildren(video);
+      video.play?.().catch(() => {});
+    });
+
+    card.addEventListener("mouseleave", () => {
+      const video = media.querySelector("video");
+      if (!video) return;
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      media.innerHTML = `<i class="fa-solid fa-photo-film"></i>`;
     });
   }
 

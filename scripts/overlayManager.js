@@ -39,7 +39,8 @@ export class FXOverlayManager {
   static async createFromAsset(asset, dropEvent) {
     if (!game.user?.isGM) return null;
 
-    if (!asset?.path) {
+    const assetPath = asset?.path ?? asset?.assetPath;
+    if (!assetPath) {
       notify(MISSING_ASSET_MESSAGE, "error");
       return null;
     }
@@ -56,8 +57,8 @@ export class FXOverlayManager {
     const height = Math.max(0.25, Number(placement.height) || DEFAULT_PLACEMENT.height) * gridSize;
     const name = placement.name || asset.name || "FX Overlay";
     const overlayData = {
-      id: stableId(`${asset.path}-${Date.now()}`),
-      assetPath: asset.path,
+      id: stableId(`${assetPath}-${Date.now()}`),
+      assetPath,
       name,
       x: position.x - width / 2,
       y: position.y - height / 2,
