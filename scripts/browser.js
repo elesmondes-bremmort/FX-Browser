@@ -44,8 +44,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.formState = null;
     this.preview = null;
     this.searchDebounce = null;
-    this.dragDrop = new FXDragDrop((id) => this.library.assets.find((asset) => asset.id === id));
-    this.dragDrop.bindCanvasDrop();
+    this.dragDrop = new FXDragDrop();
   }
 
   async _prepareContext() {
@@ -77,7 +76,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview.activateListeners();
 
     root.querySelector("[data-overlay-delete-all]")?.addEventListener("click", () => this.#confirmDeleteAllOverlays());
-    root.querySelector("[data-cleanup-remnants]")?.addEventListener("click", () => this.#confirmCleanupRemnants());
 
     root.addEventListener("click", (event) => {
       if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
@@ -230,7 +228,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   async close(options) {
     window.clearTimeout(this.searchDebounce);
-    this.dragDrop.unbindCanvasDrop();
     await this.#saveWindowState();
     FXBrowserApp.instance = null;
     return super.close(options);
@@ -439,17 +436,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     });
     if (!confirmed) return;
     await FXOverlayManager.deleteAllOverlays();
-  }
-
-  async #confirmCleanupRemnants() {
-    const confirmed = await this.#confirmDialog({
-      title: "Nettoyer les restes FX",
-      content: "<p>Supprimer uniquement les anciennes donnees experimentales FX ?</p>",
-      yes: "Nettoyer",
-      no: "Annuler"
-    });
-    if (!confirmed) return;
-    await FXOverlayManager.cleanupExperimentRemnants();
   }
 
   async #confirmDialog({ title, content, yes, no }) {

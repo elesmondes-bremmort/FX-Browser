@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.22
+
+- Remove the custom FX Browser canvas control entirely so it can never become the active scene control.
+- Replace persistent canvas drag/drop listeners with Foundry's native `dropCanvasData` hook for minimal Tile creation.
+- Keep only the scene-wide native FX Tile deletion action and run a safe cleanup for legacy experimental flags/lights.
+
 ## 0.0.21
 
 - Revert the Scene FX manager, foreground mode, and high `sort`/`elevation` controls.

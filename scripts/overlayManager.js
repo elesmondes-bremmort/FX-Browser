@@ -22,7 +22,7 @@ export class FXOverlayManager {
     }
 
     try {
-      const created = await canvas.scene.createEmbeddedDocuments("Tile", [this.#toTileData(asset, dropEvent)], { fxBrowserDrop: true });
+      const created = await canvas.scene.createEmbeddedDocuments("Tile", [this.#toTileData(asset, dropEvent)]);
       return created?.[0] ?? null;
     } catch (error) {
       console.error("FX Browser | Failed to create FX tile", error);
@@ -104,6 +104,10 @@ export class FXOverlayManager {
   }
 
   static #getDropPosition(event) {
+    if (Number.isFinite(Number(event?.x)) && Number.isFinite(Number(event?.y))) {
+      return { x: Number(event.x), y: Number(event.y) };
+    }
+
     const point = { x: event.clientX, y: event.clientY };
     if (canvas?.canvasCoordinatesFromClient) return canvas.canvasCoordinatesFromClient(point);
     if (canvas?.app?.renderer?.events?.pointer) return canvas.app.renderer.events.pointer.getLocalPosition(canvas.stage);
@@ -111,20 +115,18 @@ export class FXOverlayManager {
   }
 
   static #getRemnantCleanupUpdate(tile) {
+    const flags = tile.flags?.[FLAGS.SCOPE] ?? {};
     const update = {
-      _id: tile.id,
-      [`flags.${FLAGS.SCOPE}.-=linkedLightId`]: null,
-      [`flags.${FLAGS.SCOPE}.-=linkedTileId`]: null,
-      [`flags.${FLAGS.SCOPE}.-=generatedLight`]: null,
-      [`flags.${FLAGS.SCOPE}.-=mode`]: null,
-      [`flags.${FLAGS.SCOPE}.-=renderMode`]: null,
-      [`flags.${FLAGS.SCOPE}.-=foreground`]: null
+      _id: tile.id
     };
 
+    for (const key of ["linkedLightId", "linkedTileId", "generatedLight", "mode", "renderMode", "foreground"]) {
+      if (Object.prototype.hasOwnProperty.call(flags, key)) update[`flags.${FLAGS.SCOPE}.-=${key}`] = null;
+    }
     if (Number(tile.sort ?? 0) > 1) update.sort = 1;
     if (Number(tile.elevation ?? 0) > 1) update.elevation = 1;
     if (Number(tile.alpha ?? 1) !== 1) update.alpha = 1;
-    return update;
+    return Object.keys(update).length > 1 ? update : null;
   }
 
   static #collectionValues(collection) {
