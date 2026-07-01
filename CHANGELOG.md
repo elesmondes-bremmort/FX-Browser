@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.15
+
+- Restore FX Browser tile interactivity while the FX Overlay edit tool is active, with pointer cursor support for selectable scene FX.
+- Return FX Browser tiles to non-interactive pass-through behavior outside FX Overlay mode.
+- Keep manual FX hit testing scoped to FX Overlay mode and apply the same FX identification to scene-wide deletion.
+
 ## 0.0.14
 
 - Add manual FX tile hit testing in scene coordinates so high z-index overlays can be selected independently of native Tile selection.

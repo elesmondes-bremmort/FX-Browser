@@ -177,7 +177,6 @@ export class FXOverlayManager {
   static isOverlayDocument(tile) {
     if (!tile) return false;
     if (tile.getFlag?.(FLAGS.SCOPE, "overlay") === true) return true;
-    if (tile.getFlag?.(FLAGS.SCOPE, FLAGS.IS_OVERLAY)) return true;
     const data = tile.getFlag?.(FLAGS.SCOPE, FLAGS.DATA) ?? {};
     const src = tile.texture?.src ?? data.assetPath ?? "";
     return typeof src === "string" && src.toLowerCase().includes(".webm");

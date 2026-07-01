@@ -29,6 +29,7 @@ export class FXOverlayLayer {
     Hooks.on("renderSceneControls", () => this.syncEditModeFromControls());
     Hooks.on("drawTile", (tile) => this.applyTileInteractivity(tile));
     Hooks.on("updateTile", (tile) => {
+      this.applyTileInteractivity(tile);
       if (tile.id === this.selectedOverlayId) this.redrawSelection();
     });
     Hooks.on("deleteTile", (tile) => {
@@ -60,12 +61,12 @@ export class FXOverlayLayer {
   }
 
   static syncEditModeFromControls() {
-    const toolName = ui?.controls?.tool?.name;
+    const toolName = this.#getActiveToolName();
     if (toolName) this.setEditMode(toolName === CANVAS_EDIT_TOOL_ID);
   }
 
   static isEditModeActive() {
-    return this.active || ui?.controls?.tool?.name === CANVAS_EDIT_TOOL_ID;
+    return this.active || this.#getActiveToolName() === CANVAS_EDIT_TOOL_ID;
   }
 
   static selectOverlay(id, { pan = false } = {}) {
@@ -91,11 +92,9 @@ export class FXOverlayLayer {
 
   static applyTileInteractivity(tile) {
     if (!FXOverlayManager.isOverlayPlaceable(tile)) return;
-    tile.eventMode = "none";
-    tile.interactive = false;
-    tile.interactiveChildren = false;
-    tile.cursor = null;
-    if (tile.controlled) tile.release?.();
+    const active = this.isEditModeActive();
+    this.#setTilePointerState(tile, active);
+    if (!active && tile.controlled) tile.release?.();
   }
 
   static findFxAtPoint(sceneX, sceneY) {
@@ -239,7 +238,7 @@ export class FXOverlayLayer {
 
   static async #onKeyDown(event) {
     if (!this.isEditModeActive()) return;
-    if (event.key !== "Delete") return;
+    if (!["Delete", "Del"].includes(event.key) && event.code !== "Delete") return;
     if (this.#isTextInput(event.target)) return;
 
     const id = this.selectedOverlayId;
@@ -295,6 +294,26 @@ export class FXOverlayLayer {
   static #getTileSort(tile) {
     const document = tile.document;
     return Number(document?.elevation ?? tile.elevation ?? 0) * 100000 + Number(document?.sort ?? tile.zIndex ?? 0);
+  }
+
+  static #getActiveToolName() {
+    const tool = ui?.controls?.tool ?? ui?.controls?.activeTool;
+    if (typeof tool === "string") return tool;
+    return tool?.name ?? null;
+  }
+
+  static #setTilePointerState(tile, active) {
+    const eventMode = active ? "static" : "none";
+    const interactive = Boolean(active);
+    const cursor = active ? "pointer" : null;
+    const targets = [tile, tile.mesh, tile.bg, tile.controlIcon].filter(Boolean);
+
+    for (const target of targets) {
+      target.eventMode = eventMode;
+      target.interactive = interactive;
+      target.interactiveChildren = interactive;
+      target.cursor = cursor;
+    }
   }
 
   static #isTextInput(target) {
