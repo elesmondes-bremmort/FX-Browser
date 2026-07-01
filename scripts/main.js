@@ -6,7 +6,7 @@ import { FXOverlayManager } from "./overlayManager.js";
 import { FXBrowserSettings } from "./settings.js";
 import { debugLog } from "./utils.js";
 
-const LAUNCHER_ID = "fx-browser-launcher";
+const LAUNCHER_TOOL_ID = "fx-browser-launcher";
 
 Hooks.once("init", () => {
   debugLog("module initialized");
@@ -28,7 +28,6 @@ Hooks.once("ready", async () => {
   };
   await FXOverlayManager.cleanupExperimentRemnants();
   await FXAssetScanner.scan({ notifyResult: false });
-  installLauncherButton();
 });
 
 Hooks.on("dropCanvasData", (_canvas, data) => {
@@ -38,30 +37,50 @@ Hooks.on("dropCanvasData", (_canvas, data) => {
   return false;
 });
 
-Hooks.on("renderSceneControls", () => {
+Hooks.on("getSceneControlButtons", (controls) => {
   if (!game.user?.isGM) return;
-  window.requestAnimationFrame(() => installLauncherButton());
+  try {
+    addLauncherTool(controls);
+  } catch (error) {
+    console.error("FX Browser | Failed to add launcher button", error);
+  }
 });
 
-function installLauncherButton() {
-  if (!game.user?.isGM || document.getElementById(LAUNCHER_ID)) return;
-  const controls = document.getElementById("controls") ?? document.querySelector("#ui-left");
-  if (!controls) return;
+function addLauncherTool(controls) {
+  const tool = {
+    name: LAUNCHER_TOOL_ID,
+    title: "FX Browser",
+    icon: "fa-solid fa-fire",
+    button: true,
+    toggle: false,
+    visible: game.user?.isGM,
+    onChange: () => FXBrowserApp.toggle()
+  };
 
-  const button = document.createElement("button");
-  button.id = LAUNCHER_ID;
-  button.type = "button";
-  button.className = "fx-browser-launcher";
-  button.title = "FX Browser";
-  button.setAttribute("aria-label", "FX Browser");
-  button.innerHTML = '<i class="fa-solid fa-fire"></i>';
-  button.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    FXBrowserApp.toggle();
-  });
+  for (const control of getNativeControls(controls)) {
+    addToolToControl(control, tool);
+  }
+}
 
-  controls.append(button);
+function getNativeControls(controls) {
+  if (!controls) return [];
+  const values = controls instanceof Map ? Array.from(controls.values()) : Array.isArray(controls) ? controls : Object.values(controls);
+  return values.filter((control) => control && control.name !== LAUNCHER_TOOL_ID);
+}
+
+function addToolToControl(control, tool) {
+  if (control.tools instanceof Map) {
+    if (!control.tools.has(tool.name)) control.tools.set(tool.name, tool);
+    return;
+  }
+
+  if (Array.isArray(control.tools)) {
+    if (!control.tools.some((item) => item.name === tool.name)) control.tools.push(tool);
+    return;
+  }
+
+  control.tools ??= {};
+  if (!control.tools[tool.name]) control.tools[tool.name] = tool;
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {

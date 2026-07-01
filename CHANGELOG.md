@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.24
+
+- Restore the FX Browser launcher as a native Scene Controls button attached to existing Foundry controls.
+- Keep the launcher as a non-toggle action button so it opens or closes the browser without activating a custom mode.
+- Remove the DOM-only launcher attempt while preserving the minimal native Tile drop workflow.
+
 ## 0.0.23
 
 - Restore the FX Browser left-toolbar launcher as a DOM-only button.
