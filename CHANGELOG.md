@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.20
+
+- Add a Scene FX manager panel for native FX Tiles, opened from the FX Browser toolbar.
+- Add Normal and Foreground render modes using `sort/elevation` values of `1` or `999`.
+- Add scene-list selection, visibility toggles, per-FX deletion, and global normalize/hide/show actions without changing native Tile interactivity.
+
 ## 0.0.19
 
 - Remove the experimental ambient light compensation preset and automatic AmbientLight creation from FX drops.

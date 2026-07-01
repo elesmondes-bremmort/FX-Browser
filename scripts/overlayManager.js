@@ -3,8 +3,19 @@ import { FXBrowserSettings } from "./settings.js";
 import { canUseCanvas, getGridSize, notify } from "./utils.js";
 
 export class FXOverlayManager {
+  static NORMAL_MODE = { sort: 1, elevation: 1 };
+  static FOREGROUND_MODE = { sort: 999, elevation: 999 };
+
   static getScene() {
     return canvas?.scene ?? game.scenes?.active ?? null;
+  }
+
+  static getSceneFx(scene = this.getScene()) {
+    if (!scene) return [];
+    return this.#collectionValues(scene.tiles)
+      .filter((tile) => this.isOverlayDocument(tile))
+      .map((tile) => this.#fromTile(tile))
+      .sort((a, b) => (b.elevation - a.elevation) || (b.sort - a.sort) || a.name.localeCompare(b.name));
   }
 
   static async createFromAsset(asset, dropEvent) {
@@ -39,6 +50,58 @@ export class FXOverlayManager {
       .filter((tile) => this.isOverlayDocument(tile))
       .map((tile) => tile.id);
     if (ids.length) await scene.deleteEmbeddedDocuments("Tile", ids);
+  }
+
+  static async deleteOverlay(id) {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    const tile = scene?.tiles?.get?.(id);
+    if (!this.isOverlayDocument(tile)) return;
+    await scene.deleteEmbeddedDocuments("Tile", [id]);
+  }
+
+  static async setOverlayMode(id, mode) {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    const tile = scene?.tiles?.get?.(id);
+    if (!this.isOverlayDocument(tile)) return;
+    const values = mode === "foreground" ? this.FOREGROUND_MODE : this.NORMAL_MODE;
+    await scene.updateEmbeddedDocuments("Tile", [{ _id: id, ...values }]);
+  }
+
+  static async setOverlayVisibility(id, visible) {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    const tile = scene?.tiles?.get?.(id);
+    if (!this.isOverlayDocument(tile)) return;
+    await scene.updateEmbeddedDocuments("Tile", [{ _id: id, hidden: !visible }]);
+  }
+
+  static async setAllOverlaysMode(mode) {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    if (!scene) return;
+    const values = mode === "foreground" ? this.FOREGROUND_MODE : this.NORMAL_MODE;
+    const updates = this.getSceneFx(scene).map((fx) => ({ _id: fx.id, ...values }));
+    if (updates.length) await scene.updateEmbeddedDocuments("Tile", updates);
+  }
+
+  static async setAllOverlaysVisibility(visible) {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    if (!scene) return;
+    const updates = this.getSceneFx(scene).map((fx) => ({ _id: fx.id, hidden: !visible }));
+    if (updates.length) await scene.updateEmbeddedDocuments("Tile", updates);
+  }
+
+  static panToOverlay(id) {
+    const tile = canvas?.scene?.tiles?.get?.(id);
+    if (!tile) return;
+    canvas?.animatePan?.({
+      x: Number(tile.x ?? 0) + Number(tile.width ?? 0) / 2,
+      y: Number(tile.y ?? 0) + Number(tile.height ?? 0) / 2,
+      duration: 250
+    });
   }
 
   static async deleteOrphanGeneratedLights() {
@@ -102,6 +165,24 @@ export class FXOverlayManager {
     if (canvas?.canvasCoordinatesFromClient) return canvas.canvasCoordinatesFromClient(point);
     if (canvas?.app?.renderer?.events?.pointer) return canvas.app.renderer.events.pointer.getLocalPosition(canvas.stage);
     return canvas.stage.worldTransform.applyInverse(point);
+  }
+
+  static #fromTile(tile) {
+    const sort = Number(tile.sort ?? 0);
+    const elevation = Number(tile.elevation ?? 0);
+    const assetPath = tile.getFlag?.(FLAGS.SCOPE, "assetPath") ?? tile.texture?.src ?? "";
+    const mode = sort >= this.FOREGROUND_MODE.sort || elevation >= this.FOREGROUND_MODE.elevation ? "foreground" : "normal";
+    return {
+      id: tile.id,
+      name: tile.name || "FX Tile",
+      assetPath,
+      hidden: Boolean(tile.hidden),
+      visible: !tile.hidden,
+      sort,
+      elevation,
+      mode,
+      modeLabel: mode === "foreground" ? "Premier plan" : "Normal"
+    };
   }
 
   static #collectionValues(collection) {

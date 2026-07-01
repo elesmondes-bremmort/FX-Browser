@@ -1,6 +1,7 @@
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXBrowserApp } from "./browser.js";
 import { CANVAS_CONTROL_ID, CANVAS_TOOL_ID, MODULE_ID } from "./constants.js";
+import { FXOverlayManager } from "./overlayManager.js";
 import { FXBrowserSettings } from "./settings.js";
 import { debugLog } from "./utils.js";
 
@@ -28,6 +29,10 @@ Hooks.on("getSceneControlButtons", (controls) => {
     console.error("FX Browser | Failed to add canvas control button", error);
   }
 });
+
+Hooks.on("createTile", (tile) => refreshSceneFxPanel(tile));
+Hooks.on("updateTile", (tile) => refreshSceneFxPanel(tile));
+Hooks.on("deleteTile", (tile) => refreshSceneFxPanel(tile));
 
 function addCanvasControlButton(controls) {
   if (!controls) {
@@ -103,6 +108,11 @@ function ensureControlTools(control, tools) {
   for (const tool of tools) {
     control.tools[tool.name] = tool;
   }
+}
+
+function refreshSceneFxPanel(tile) {
+  if (!FXOverlayManager.isOverlayDocument(tile)) return;
+  FXBrowserApp.instance?.refreshSceneFxPanel?.();
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {

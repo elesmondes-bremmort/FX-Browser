@@ -61,6 +61,12 @@
   border-radius: 6px;
 }
 
+.fx-browser-topbar button.active {
+  color: #16110b;
+  background: var(--fx-gold);
+  border-color: var(--fx-gold);
+}
+
 .fx-browser-content {
   min-height: 0;
   overflow: hidden;
