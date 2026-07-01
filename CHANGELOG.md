@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.5
+
+- Stop Foundry native audio handling from creating AmbientSound documents when dropping FX Browser overlays.
+- Restrict FX Browser drag payloads to the custom overlay MIME/type and keep native non-FX drops untouched.
+
 ## 0.1.0
 
 - Create the initial Foundry VTT v13 FX Browser module.

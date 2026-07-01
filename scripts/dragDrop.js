@@ -3,6 +3,7 @@ import { debugLog } from "./utils.js";
 
 const DRAG_TYPE = "fx-browser-overlay";
 const MIME_TYPE = "application/x-fx-browser-overlay";
+const LISTENER_OPTIONS = { capture: true };
 
 export class FXDragDrop {
   constructor(getAssetById) {
@@ -28,7 +29,6 @@ export class FXDragDrop {
         playback: asset.playback
       });
       event.dataTransfer.setData(MIME_TYPE, payload);
-      event.dataTransfer.setData("application/json", payload);
       event.dataTransfer.effectAllowed = "copy";
       debugLog("drag start", asset.path);
     });
@@ -43,16 +43,16 @@ export class FXDragDrop {
 
     for (const target of targets) {
       if (this.boundTargets.has(target)) continue;
-      target.addEventListener("dragover", this.boundDragOver);
-      target.addEventListener("drop", this.boundDrop);
+      target.addEventListener("dragover", this.boundDragOver, LISTENER_OPTIONS);
+      target.addEventListener("drop", this.boundDrop, LISTENER_OPTIONS);
       this.boundTargets.add(target);
     }
   }
 
   unbindCanvasDrop() {
     for (const target of this.boundTargets) {
-      target.removeEventListener("dragover", this.boundDragOver);
-      target.removeEventListener("drop", this.boundDrop);
+      target.removeEventListener("dragover", this.boundDragOver, LISTENER_OPTIONS);
+      target.removeEventListener("drop", this.boundDrop, LISTENER_OPTIONS);
     }
     this.boundTargets.clear();
   }
@@ -61,33 +61,38 @@ export class FXDragDrop {
     if (!this.#isCanvasEvent(event) || !this.#hasOverlayPayload(event)) return;
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation?.();
     event.dataTransfer.dropEffect = "copy";
+    return false;
   }
 
   async #onCanvasDrop(event) {
-    if (!this.#isCanvasEvent(event)) return;
+    if (!this.#isCanvasEvent(event)) return true;
 
     const payload = this.#readPayload(event);
-    if (payload?.type !== DRAG_TYPE) return;
+    if (payload?.type !== DRAG_TYPE) return true;
 
     event.preventDefault();
     event.stopPropagation();
-    event.stopImmediatePropagation();
+    event.stopImmediatePropagation?.();
     debugLog("drop received");
     debugLog("assetPath", payload.assetPath);
 
     const dropKey = `${payload.assetPath}-${Math.round(event.clientX)}-${Math.round(event.clientY)}`;
     if (this.lastDropKey === dropKey || this.activeDropKeys.has(dropKey)) {
       debugLog("drop ignored as duplicate", dropKey);
-      return;
+      return false;
     }
 
     this.lastDropKey = dropKey;
     this.activeDropKeys.add(dropKey);
     const asset = this.getAssetById(payload.id) ?? payload;
+    const soundIdsBeforeDrop = this.#getAmbientSoundIds();
     try {
       await FXOverlayManager.createFromAsset(asset, event);
+      this.#logUnexpectedAmbientSounds(soundIdsBeforeDrop);
       debugLog("drop complete");
+      return false;
     } finally {
       window.setTimeout(() => {
         this.activeDropKeys.delete(dropKey);
@@ -97,7 +102,8 @@ export class FXDragDrop {
   }
 
   #readPayload(event) {
-    const raw = event.dataTransfer?.getData(MIME_TYPE) || event.dataTransfer?.getData("application/json");
+    if (!this.#hasOverlayPayload(event)) return null;
+    const raw = event.dataTransfer?.getData(MIME_TYPE);
     if (!raw) return null;
     try {
       return JSON.parse(raw);
@@ -118,6 +124,29 @@ export class FXDragDrop {
 
   #hasOverlayPayload(event) {
     return Array.from(event.dataTransfer?.types ?? []).includes(MIME_TYPE);
+  }
+
+  #getAmbientSoundIds() {
+    return new Set(this.#getAmbientSounds().map((sound) => sound.id));
+  }
+
+  #logUnexpectedAmbientSounds(previousIds) {
+    window.setTimeout(() => {
+      const created = this.#getAmbientSounds().filter((sound) => !previousIds.has(sound.id));
+      if (!created.length) {
+        debugLog("native audio guard: no AmbientSound created");
+        return;
+      }
+
+      console.warn("FX Browser | Native audio guard detected unexpected AmbientSound creation after FX drop", created);
+    }, 100);
+  }
+
+  #getAmbientSounds() {
+    const sounds = canvas?.scene?.sounds;
+    if (!sounds) return [];
+    if (typeof sounds.values === "function") return Array.from(sounds.values());
+    return Array.from(sounds);
   }
 
   #getCanvasDropTargets() {
