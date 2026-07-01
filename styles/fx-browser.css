@@ -9,6 +9,25 @@
   color: var(--fx-text);
 }
 
+.fx-browser-launcher {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  margin: 4px;
+  color: #f2ece2;
+  background: #1f1b18;
+  border: 1px solid #5c4726;
+  border-radius: 6px;
+}
+
+.fx-browser-launcher:hover,
+.fx-browser-launcher:focus-visible {
+  color: #16110b;
+  background: #d7b45f;
+  border-color: #d7b45f;
+}
+
 .fx-browser-window .window-content {
   padding: 0;
   background: var(--fx-bg);

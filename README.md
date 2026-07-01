@@ -6,6 +6,7 @@ The module focuses on JB2A-style animated assets and custom folders. It does not
 
 ## Features
 
+- Left-toolbar launcher that only opens or closes the FX Browser window.
 - Macro/API opening through `game.modules.get("fx-browser").api.open()`.
 - Floating, draggable, resizable browser window with remembered size and position.
 - Automatic scan of common JB2A Free and Patreon module folders.
@@ -40,4 +41,4 @@ Missing JB2A folders, invalid custom folders, deleted WebM files, no active scen
 
 ## Version
 
-Current version: `0.0.22`.
+Current version: `0.0.23`.

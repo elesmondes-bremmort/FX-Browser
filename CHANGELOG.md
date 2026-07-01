@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.23
+
+- Restore the FX Browser left-toolbar launcher as a DOM-only button.
+- Keep the launcher outside Foundry SceneControls so it never becomes an active control, tool, or layer.
+- Preserve the minimal native Tile drop workflow and the removal of custom FX canvas modes.
+
 ## 0.0.22
 
 - Remove the custom FX Browser canvas control entirely so it can never become the active scene control.
