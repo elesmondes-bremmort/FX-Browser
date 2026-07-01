@@ -1,12 +1,15 @@
-<article class="fx-browser-card" data-asset-id="{{id}}" data-preview-src="{{path}}" title="{{path}}">
+<article class="fx-browser-card {{#if missing}}missing{{/if}}" data-asset-id="{{id}}" data-preview-src="{{path}}" title="{{path}}">
   <div class="fx-browser-card-media">
-    <i class="fa-solid fa-photo-film"></i>
+    {{#if favorite}}<span class="fx-browser-card-favorite"><i class="fa-solid fa-star"></i></span>{{/if}}
+    {{#if missing}}<i class="fa-solid fa-triangle-exclamation"></i>{{else}}<i class="fa-solid fa-photo-film"></i>{{/if}}
   </div>
   <div class="fx-browser-card-body">
     <h3>{{name}}</h3>
     <div class="fx-browser-card-badges">
       <span>{{categoryLabel}}</span>
-      <span>{{playback}}</span>
+      {{#if playback}}<span>{{playback}}</span>{{/if}}
+      <span>{{sourceName}}</span>
+      {{#if missing}}<span>Asset introuvable</span>{{/if}}
     </div>
   </div>
 </article>

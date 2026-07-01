@@ -78,10 +78,39 @@
   border-right: 1px solid rgb(215 180 95 / 18%);
 }
 
+.fx-browser-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(215 180 95 / 14%);
+}
+
+.fx-browser-nav-section:last-child {
+  border-bottom: 0;
+}
+
+.fx-browser-nav-section h2 {
+  margin: 4px 0 2px;
+  color: var(--fx-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .fx-browser-categories button {
-  height: 30px;
+  min-height: 30px;
   text-align: left;
-  padding: 0 10px;
+  padding: 4px 10px;
+}
+
+.fx-browser-categories button small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--fx-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fx-browser-categories button.active {

@@ -43,11 +43,17 @@
   border-radius: 6px;
 }
 
+.fx-browser-card.missing {
+  opacity: 0.68;
+  cursor: default;
+}
+
 .fx-browser-card:active {
   cursor: grabbing;
 }
 
 .fx-browser-card-media {
+  position: relative;
   width: 128px;
   height: 112px;
   display: grid;
@@ -62,6 +68,15 @@
     linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
   background-size: 16px 16px;
+}
+
+.fx-browser-card-favorite {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  color: #f2cf6c;
+  font-size: 12px;
+  text-shadow: 0 1px 3px #000;
 }
 
 .fx-browser-card video {

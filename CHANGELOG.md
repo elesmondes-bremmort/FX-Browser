@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.9
+
+- Fix search input focus loss by updating only the asset grid with a light debounce while typing.
+- Keep Scene Control events native and limit event cancellation to FX Browser internals and FX overlay drops.
+- Add virtual library organization with source filters, favorites, personal folders, virtual renaming, and missing-asset display.
+
 ## 0.0.7
 
 - Move the GM-only FX Browser launcher back into Foundry's native left Scene Controls with a flame icon.

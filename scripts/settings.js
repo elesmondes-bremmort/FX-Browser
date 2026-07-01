@@ -1,4 +1,4 @@
-import { DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
+import { DEFAULT_LIBRARY_ORGANIZATION, DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
 import { parseDirectoryList } from "./utils.js";
 
 export class FXBrowserSettings {
@@ -39,6 +39,13 @@ export class FXBrowserSettings {
       type: String,
       default: ""
     });
+
+    game.settings.register(MODULE_ID, SETTINGS.LIBRARY_ORGANIZATION, {
+      scope: "world",
+      config: false,
+      type: Object,
+      default: DEFAULT_LIBRARY_ORGANIZATION
+    });
   }
 
   static getCustomDirectories() {
@@ -64,6 +71,21 @@ export class FXBrowserSettings {
     await game.settings.set(MODULE_ID, SETTINGS.PLACEMENT, {
       ...this.getPlacement(),
       ...settings
+    });
+  }
+
+  static getLibraryOrganization() {
+    const organization = game.settings.get(MODULE_ID, SETTINGS.LIBRARY_ORGANIZATION) ?? {};
+    return {
+      folders: Array.isArray(organization.folders) ? organization.folders : [],
+      assets: organization.assets && typeof organization.assets === "object" ? organization.assets : {}
+    };
+  }
+
+  static async setLibraryOrganization(organization) {
+    await game.settings.set(MODULE_ID, SETTINGS.LIBRARY_ORGANIZATION, {
+      folders: Array.isArray(organization.folders) ? organization.folders : [],
+      assets: organization.assets && typeof organization.assets === "object" ? organization.assets : {}
     });
   }
 }

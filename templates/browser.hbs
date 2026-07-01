@@ -12,11 +12,36 @@
 
   <div class="fx-browser-content">
     <nav class="fx-browser-categories" aria-label="{{localize 'fx-browser.categories.label'}}">
+      <div class="fx-browser-nav-section">
+        <button type="button" class="{{#if librarySections.all}}active{{/if}}" data-special-filter="all">Toutes les sources</button>
+        <button type="button" class="{{#if librarySections.favorites}}active{{/if}}" data-special-filter="favorites">Favoris</button>
+        <button type="button" class="{{#if librarySections.personal}}active{{/if}}" data-special-filter="personal">Mes effets</button>
+      </div>
+      <div class="fx-browser-nav-section" data-folder-list>
+        <h2>Dossiers personnels</h2>
+        {{#each folders}}
+          <button type="button" class="{{#if active}}active{{/if}}" data-folder-filter="{{id}}">
+            {{name}}
+          </button>
+        {{/each}}
+      </div>
+      <div class="fx-browser-nav-section">
+        <h2>Sources détectées</h2>
+        {{#each sources}}
+          <button type="button" class="{{#if active}}active{{/if}}" data-source-filter="{{id}}" title="{{path}}">
+            <span>{{name}}</span>
+            <small>{{path}} · {{count}}</small>
+          </button>
+        {{/each}}
+      </div>
+      <div class="fx-browser-nav-section">
+        <h2>Catégories</h2>
       {{#each categories}}
         <button type="button" class="{{#if active}}active{{/if}}" data-action="selectCategory" data-category="{{id}}">
           {{label}}
         </button>
       {{/each}}
+      </div>
     </nav>
 
     <main class="fx-browser-grid" aria-live="polite">

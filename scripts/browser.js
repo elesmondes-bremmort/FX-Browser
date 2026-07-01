@@ -2,6 +2,7 @@ import { CATEGORIES } from "./categories.js";
 import { DEFAULT_WINDOW_STATE, EMPTY_LIBRARY_MESSAGE } from "./constants.js";
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
+import { FXLibraryManager } from "./libraryManager.js";
 import { FXOverlayControls } from "./overlayControls.js";
 import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
@@ -34,17 +35,23 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   constructor(options = {}) {
     super({ ...options, position: FXBrowserSettings.getWindowState() });
     this.assets = FXAssetScanner.getCachedAssets();
+    this.library = FXLibraryManager.buildLibrary(this.assets);
     this.filteredAssets = this.assets;
     this.selectedAsset = this.assets[0] ?? null;
     this.category = "all";
+    this.sourceFilter = "all";
+    this.folderFilter = "";
+    this.specialFilter = "all";
     this.query = "";
     this.preview = null;
     this.selectedOverlayId = null;
-    this.dragDrop = new FXDragDrop((id) => this.assets.find((asset) => asset.id === id));
+    this.searchDebounce = null;
+    this.dragDrop = new FXDragDrop((id) => this.library.assets.find((asset) => asset.id === id));
     this.dragDrop.bindCanvasDrop();
   }
 
   async _prepareContext() {
+    this.#refreshLibrary();
     this.#filterAssets();
     const overlays = FXOverlayManager.getOverlays();
     const selectedOverlay = overlays.find((overlay) => overlay.id === this.selectedOverlayId) ?? overlays[0] ?? null;
@@ -52,6 +59,13 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
     return {
       categories: CATEGORIES.map((category) => ({ ...category, active: category.id === this.category })),
+      sources: this.library.sources.map((source) => ({ ...source, active: this.sourceFilter === source.id })),
+      folders: this.library.folders.map((folder) => ({ ...folder, active: this.folderFilter === folder.id })),
+      librarySections: {
+        all: this.specialFilter === "all",
+        favorites: this.specialFilter === "favorites",
+        personal: this.specialFilter === "personal"
+      },
       assets: this.filteredAssets,
       overlays,
       selectedOverlay,
@@ -76,19 +90,40 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
     root.querySelector("[data-search]")?.addEventListener("input", (event) => {
       this.query = event.currentTarget.value;
-      this.render({ force: true });
+      window.clearTimeout(this.searchDebounce);
+      this.searchDebounce = window.setTimeout(() => this.#renderAssetList(), 125);
     });
 
-    root.querySelectorAll("[data-asset-id]").forEach((card) => {
-      const asset = this.assets.find((item) => item.id === card.dataset.assetId);
-      if (!asset) return;
-      this.dragDrop.activateCard(card, asset);
-      this.#activateHoverPreview(card);
-      card.addEventListener("click", () => {
-        this.selectedAsset = asset;
+    root.querySelectorAll("[data-source-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.sourceFilter = button.dataset.sourceFilter;
+        this.specialFilter = "all";
+        this.folderFilter = "";
         this.render({ force: true });
       });
     });
+
+    root.querySelectorAll("[data-special-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.specialFilter = button.dataset.specialFilter;
+        this.sourceFilter = "all";
+        this.folderFilter = "";
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelectorAll("[data-folder-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        this.folderFilter = button.dataset.folderFilter;
+        this.specialFilter = "folder";
+        this.sourceFilter = "all";
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelector("[data-folder-list]")?.addEventListener("contextmenu", (event) => this.#onFolderContextMenu(event));
+
+    this.#activateAssetCards();
 
     root.querySelectorAll("[data-placement]").forEach((input) => {
       input.addEventListener("change", () => this.#savePlacement(root));
@@ -123,7 +158,25 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     });
   }
 
+  #activateAssetCards() {
+    this.element.querySelectorAll("[data-asset-id]").forEach((card) => {
+      const asset = this.library.assets.find((item) => item.id === card.dataset.assetId);
+      if (!asset) return;
+      if (!asset.missing) {
+        this.dragDrop.activateCard(card, asset);
+        this.#activateHoverPreview(card);
+      }
+      card.addEventListener("click", () => {
+        if (asset.missing) return;
+        this.selectedAsset = asset;
+        this.preview?.render(asset);
+      });
+      card.addEventListener("contextmenu", (event) => this.#onAssetContextMenu(event, asset));
+    });
+  }
+
   async close(options) {
+    window.clearTimeout(this.searchDebounce);
     this.dragDrop.unbindCanvasDrop();
     await this.#saveWindowState();
     FXBrowserApp.instance = null;
@@ -162,12 +215,17 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   }
 
   #filterAssets() {
+    this.#refreshLibrary();
     const query = this.query.trim().toLowerCase();
-    this.filteredAssets = this.assets.filter((asset) => {
+    this.filteredAssets = this.library.assets.filter((asset) => {
       const matchesCategory = this.category === "all" || asset.category === this.category;
-      const haystack = `${asset.name} ${asset.path} ${asset.categoryLabel}`.toLowerCase();
+      const matchesSource = this.sourceFilter === "all" || asset.sourceId === this.sourceFilter;
+      const matchesSpecial = this.specialFilter !== "favorites" || asset.favorite;
+      const matchesPersonal = this.specialFilter !== "personal" || Boolean(asset.virtualFolderId);
+      const matchesFolder = this.specialFilter !== "folder" || asset.virtualFolderId === this.folderFilter;
+      const haystack = `${asset.name} ${asset.path} ${asset.categoryLabel} ${asset.sourceName}`.toLowerCase();
       const matchesQuery = !query || haystack.includes(query);
-      return matchesCategory && matchesQuery;
+      return matchesCategory && matchesSource && matchesSpecial && matchesPersonal && matchesFolder && matchesQuery;
     });
 
     if (this.selectedAsset && !this.filteredAssets.some((asset) => asset.id === this.selectedAsset.id)) {
@@ -177,6 +235,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   static async #onRescan() {
     this.assets = await FXAssetScanner.scan();
+    this.#refreshLibrary();
     this.selectedAsset = this.assets[0] ?? null;
     this.render({ force: true });
   }
@@ -187,6 +246,70 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   static async #onSelectCategory(event, target) {
     this.category = target.dataset.category;
+    this.render({ force: true });
+  }
+
+  #refreshLibrary() {
+    this.library = FXLibraryManager.buildLibrary(this.assets);
+  }
+
+  async #renderAssetList() {
+    this.#filterAssets();
+    const grid = this.element.querySelector(".fx-browser-grid");
+    if (!grid) return;
+    if (!this.filteredAssets.length) {
+      grid.innerHTML = `<div class="fx-browser-empty">${EMPTY_LIBRARY_MESSAGE}</div>`;
+      return;
+    }
+
+    const cards = await Promise.all(this.filteredAssets.map((asset) => renderTemplate("modules/fx-browser/templates/asset-card.hbs", asset)));
+    grid.innerHTML = cards.join("");
+    this.#activateAssetCards();
+  }
+
+  async #onAssetContextMenu(event, asset) {
+    event.preventDefault();
+    event.stopPropagation();
+    const action = window.prompt("Action: rename, favorite, move", asset.favorite ? "favorite" : "rename");
+    if (!action) return;
+
+    if (action === "rename") {
+      const name = window.prompt("Nouveau nom virtuel", asset.displayName || asset.name);
+      if (name !== null) await FXLibraryManager.renameAsset(asset.path, name, asset.sourceId);
+    } else if (action === "favorite") {
+      await FXLibraryManager.toggleFavorite(asset.path, asset.sourceId);
+    } else if (action === "move") {
+      const folders = this.library.folders.map((folder) => `${folder.id}: ${folder.name}`).join("\n");
+      const folderId = window.prompt(`Dossier cible (laisser vide pour retirer):\n${folders}`, asset.virtualFolderId || "");
+      if (folderId !== null) await FXLibraryManager.moveAsset(asset.path, folderId, asset.sourceId);
+    }
+
+    this.#refreshLibrary();
+    await this.#renderAssetList();
+  }
+
+  async #onFolderContextMenu(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const folderId = event.target?.closest?.("[data-folder-filter]")?.dataset?.folderFilter ?? "";
+    const action = window.prompt("Action dossier: new, rename, delete", folderId ? "rename" : "new");
+    if (!action) return;
+
+    if (action === "new") {
+      const name = window.prompt("Nom du dossier virtuel", "Nouveau dossier");
+      if (name !== null) await FXLibraryManager.createFolder(name);
+    } else if (action === "rename" && folderId) {
+      const folder = this.library.folders.find((item) => item.id === folderId);
+      const name = window.prompt("Nouveau nom du dossier", folder?.name ?? "");
+      if (name !== null) await FXLibraryManager.renameFolder(folderId, name);
+    } else if (action === "delete" && folderId) {
+      await FXLibraryManager.deleteFolder(folderId);
+      if (this.folderFilter === folderId) {
+        this.folderFilter = "";
+        this.specialFilter = "all";
+      }
+    }
+
     this.render({ force: true });
   }
 
