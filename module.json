@@ -2,7 +2,7 @@
   "id": "fx-browser",
   "title": "FX Browser",
   "description": "Browse, preview, search, and drop animated WebM effects as tiles.",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "compatibility": {
     "minimum": "13",
     "verified": "13"

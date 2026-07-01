@@ -1,5 +1,5 @@
 import { CATEGORIES } from "./categories.js";
-import { DEFAULT_WINDOW_STATE, EMPTY_LIBRARY_MESSAGE } from "./constants.js";
+import { DEFAULT_WINDOW_STATE } from "./constants.js";
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
 import { FXLibraryManager } from "./libraryManager.js";
@@ -74,7 +74,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       selectedOverlay,
       selectedAsset: this.selectedAsset,
       placement: FXBrowserSettings.getPlacement(),
-      emptyMessage: EMPTY_LIBRARY_MESSAGE,
+      emptyMessage: this.#getEmptyMessage(),
       hasAssets: this.filteredAssets.length > 0,
       query: this.query
     };
@@ -244,7 +244,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       const matchesSpecial = this.specialFilter !== "favorites" || asset.favorite;
       const matchesPersonal = this.specialFilter !== "personal" || Boolean(asset.virtualFolderId);
       const matchesFolder = this.specialFilter !== "folder" || asset.virtualFolderId === this.folderFilter;
-      const haystack = `${asset.name} ${asset.path} ${asset.categoryLabel} ${asset.sourceName}`.toLowerCase();
+      const haystack = `${asset.originalName ?? ""} ${asset.displayName ?? ""} ${asset.name} ${asset.path} ${asset.categoryLabel} ${asset.sourceName}`.toLowerCase();
       const matchesQuery = !query || haystack.includes(query);
       return matchesCategory && matchesSource && matchesSpecial && matchesPersonal && matchesFolder && matchesQuery;
     });
@@ -310,13 +310,22 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     const grid = this.element.querySelector(".fx-browser-grid");
     if (!grid) return;
     if (!this.filteredAssets.length) {
-      grid.innerHTML = `<div class="fx-browser-empty">${EMPTY_LIBRARY_MESSAGE}</div>`;
+      grid.innerHTML = `<div class="fx-browser-empty">${this.#getEmptyMessage()}</div>`;
       return;
     }
 
     const cards = await Promise.all(this.filteredAssets.map((asset) => renderTemplate("modules/fx-browser/templates/asset-card.hbs", asset)));
     grid.innerHTML = cards.join("");
     this.#activateAssetCards();
+  }
+
+  #getEmptyMessage() {
+    const hasSources = FXOriginVaultSources.getSources().length > 0;
+    const hasIndexedAssets = this.library.assets.some((asset) => !asset.missing);
+    if (this.query.trim() && hasIndexedAssets) return "Aucun effet trouvé pour cette recherche.";
+    if (hasSources && !hasIndexedAssets) return "Source détectée, aucun FX indexé. Cliquez sur Rescanner.";
+    if (!hasSources) return "Aucune bibliothèque d'effets détectée.";
+    return "Aucune bibliothèque d'effets scannée.";
   }
 
   async #onAssetContextMenu(event, asset) {

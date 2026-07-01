@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.11
+
+- Separate top-bar asset search from source management and show precise empty states for missing libraries, unscanned sources, and no search matches.
+- Clean the library sidebar with compact single-line Origin Vault source rows, inline enable toggles, counts, and remove actions.
+- Widen and stabilize the sidebar so Sources, virtual folders, and detected sources remain readable without horizontal scrolling.
+
 ## 0.0.10
 
 - Add persistent Origin Vault source selection with enabled/disabled repositories, manual source entry, and recursive scanning.
