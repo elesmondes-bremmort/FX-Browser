@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.19
+
+- Remove the experimental ambient light compensation preset and automatic AmbientLight creation from FX drops.
+- Return scene cleanup to deleting only native FX Tile documents.
+- Add an emergency cleanup button for legacy V0.0.18 generated FX lights marked with `fx-browser.generatedLight`.
+
 ## 0.0.18
 
 - Add optional experimental AmbientLight compensation for newly dropped native FX Tiles.

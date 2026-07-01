@@ -1,6 +1,5 @@
 import { DEFAULT_PLACEMENT, FLAGS, MISSING_ASSET_MESSAGE } from "./constants.js";
 import { FXBrowserSettings } from "./settings.js";
-import { LightCompensationManager } from "./lightCompensationManager.js";
 import { canUseCanvas, getGridSize, notify } from "./utils.js";
 
 export class FXOverlayManager {
@@ -24,13 +23,7 @@ export class FXOverlayManager {
 
     try {
       const created = await canvas.scene.createEmbeddedDocuments("Tile", [this.#toTileData(asset, dropEvent)], { fxBrowserDrop: true });
-      const tile = created?.[0] ?? null;
-      if (tile) {
-        LightCompensationManager.createLinkedLight(tile).catch((error) => {
-          console.error("FX Browser | Failed to create linked FX light", error);
-        });
-      }
-      return tile;
+      return created?.[0] ?? null;
     } catch (error) {
       console.error("FX Browser | Failed to create FX tile", error);
       notify(game.i18n.localize("fx-browser.errors.overlayCreate"), "error");
@@ -45,8 +38,17 @@ export class FXOverlayManager {
     const ids = scene.tiles
       .filter((tile) => this.isOverlayDocument(tile))
       .map((tile) => tile.id);
-    await LightCompensationManager.deleteGeneratedLights(scene);
-    if (ids.length) await scene.deleteEmbeddedDocuments("Tile", ids, { fxBrowserDeleteAll: true });
+    if (ids.length) await scene.deleteEmbeddedDocuments("Tile", ids);
+  }
+
+  static async deleteOrphanGeneratedLights() {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    if (!scene) return;
+    const ids = this.#collectionValues(scene.lights)
+      .filter((light) => light.getFlag?.(FLAGS.SCOPE, "generatedLight") === true)
+      .map((light) => light.id);
+    if (ids.length) await scene.deleteEmbeddedDocuments("AmbientLight", ids);
   }
 
   static isOverlayDocument(tile) {
@@ -100,5 +102,12 @@ export class FXOverlayManager {
     if (canvas?.canvasCoordinatesFromClient) return canvas.canvasCoordinatesFromClient(point);
     if (canvas?.app?.renderer?.events?.pointer) return canvas.app.renderer.events.pointer.getLocalPosition(canvas.stage);
     return canvas.stage.worldTransform.applyInverse(point);
+  }
+
+  static #collectionValues(collection) {
+    if (!collection) return [];
+    if (typeof collection.filter === "function") return collection.filter(() => true);
+    if (typeof collection.values === "function") return Array.from(collection.values());
+    return Array.from(collection);
   }
 }

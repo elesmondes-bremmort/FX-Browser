@@ -1,14 +1,12 @@
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXBrowserApp } from "./browser.js";
 import { CANVAS_CONTROL_ID, CANVAS_TOOL_ID, MODULE_ID } from "./constants.js";
-import { LightCompensationManager } from "./lightCompensationManager.js";
 import { FXBrowserSettings } from "./settings.js";
 import { debugLog } from "./utils.js";
 
 Hooks.once("init", () => {
   debugLog("module initialized");
   FXBrowserSettings.register();
-  LightCompensationManager.register();
   loadTemplates([
     "modules/fx-browser/templates/asset-card.hbs",
     "modules/fx-browser/templates/preview.hbs",
