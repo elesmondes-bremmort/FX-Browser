@@ -1,5 +1,7 @@
 export const MODULE_ID = "fx-browser";
 export const MODULE_TITLE = "FX Browser";
+export const CANVAS_CONTROL_ID = "fx-browser-control";
+export const CANVAS_TOOL_ID = "fx-browser-open-browser";
 
 export const SETTINGS = {
   CUSTOM_DIRECTORIES: "customDirectories",

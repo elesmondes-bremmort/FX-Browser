@@ -1,6 +1,6 @@
 import { DEFAULT_PLACEMENT, FLAGS, MISSING_ASSET_MESSAGE } from "./constants.js";
 import { FXBrowserSettings } from "./settings.js";
-import { canUseCanvas, getGridSize, notify, stableId } from "./utils.js";
+import { canUseCanvas, debugLog, getGridSize, notify, stableId } from "./utils.js";
 
 export class FXOverlayManager {
   static getScene() {
@@ -76,9 +76,14 @@ export class FXOverlayManager {
     const tileData = this.#toTileData(overlayData);
 
     try {
-      const created = await canvas.scene.createEmbeddedDocuments("Tile", [tileData]);
+      debugLog("creating overlay", assetPath);
+      const created = await canvas.scene.createEmbeddedDocuments("Tile", [tileData], { fxBrowserDrop: true });
+      debugLog("update scene flags");
       const tile = created?.[0] ?? null;
-      if (tile) Hooks.callAll("fxBrowserOverlayChanged", canvas.scene, this.fromTile(tile));
+      if (tile) {
+        await this.#renderTile(tile);
+        Hooks.callAll("fxBrowserOverlayChanged", canvas.scene, this.fromTile(tile));
+      }
       return tile;
     } catch (error) {
       console.error("FX Browser | Failed to create FX Overlay", error);
@@ -193,5 +198,17 @@ export class FXOverlayManager {
     if (canvas?.canvasCoordinatesFromClient) return canvas.canvasCoordinatesFromClient(point);
     if (canvas?.app?.renderer?.events?.pointer) return canvas.app.renderer.events.pointer.getLocalPosition(canvas.stage);
     return canvas.stage.worldTransform.applyInverse(point);
+  }
+
+  static async #renderTile(tile) {
+    debugLog("render overlay", tile.id);
+    const layer = canvas?.tiles;
+    const placeable = layer?.placeables?.find((item) => item.document?.id === tile.id);
+    if (placeable) {
+      placeable.refresh?.();
+      return;
+    }
+
+    await layer?.draw?.();
   }
 }

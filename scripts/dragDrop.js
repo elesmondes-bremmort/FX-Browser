@@ -1,4 +1,5 @@
 import { FXOverlayManager } from "./overlayManager.js";
+import { debugLog } from "./utils.js";
 
 const DRAG_TYPE = "fx-browser-overlay";
 const MIME_TYPE = "application/x-fx-browser-overlay";
@@ -9,6 +10,8 @@ export class FXDragDrop {
     this.boundDrop = this.#onCanvasDrop.bind(this);
     this.boundDragOver = this.#onDragOver.bind(this);
     this.lastDropKey = null;
+    this.activeDropKeys = new Set();
+    this.boundTargets = new Set();
   }
 
   activateCard(card, asset) {
@@ -27,17 +30,31 @@ export class FXDragDrop {
       event.dataTransfer.setData(MIME_TYPE, payload);
       event.dataTransfer.setData("application/json", payload);
       event.dataTransfer.effectAllowed = "copy";
+      debugLog("drag start", asset.path);
     });
   }
 
   bindCanvasDrop() {
-    document.addEventListener("dragover", this.boundDragOver, true);
-    document.addEventListener("drop", this.boundDrop, true);
+    const targets = this.#getCanvasDropTargets();
+    if (!targets.length) {
+      Hooks.once("canvasReady", () => this.bindCanvasDrop());
+      return;
+    }
+
+    for (const target of targets) {
+      if (this.boundTargets.has(target)) continue;
+      target.addEventListener("dragover", this.boundDragOver);
+      target.addEventListener("drop", this.boundDrop);
+      this.boundTargets.add(target);
+    }
   }
 
   unbindCanvasDrop() {
-    document.removeEventListener("dragover", this.boundDragOver, true);
-    document.removeEventListener("drop", this.boundDrop, true);
+    for (const target of this.boundTargets) {
+      target.removeEventListener("dragover", this.boundDragOver);
+      target.removeEventListener("drop", this.boundDrop);
+    }
+    this.boundTargets.clear();
   }
 
   #onDragOver(event) {
@@ -56,11 +73,27 @@ export class FXDragDrop {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const dropKey = `${payload.assetPath}-${event.clientX}-${event.clientY}-${Math.round(event.timeStamp / 250)}`;
-    if (this.lastDropKey === dropKey) return;
+    debugLog("drop received");
+    debugLog("assetPath", payload.assetPath);
+
+    const dropKey = `${payload.assetPath}-${Math.round(event.clientX)}-${Math.round(event.clientY)}`;
+    if (this.lastDropKey === dropKey || this.activeDropKeys.has(dropKey)) {
+      debugLog("drop ignored as duplicate", dropKey);
+      return;
+    }
+
     this.lastDropKey = dropKey;
+    this.activeDropKeys.add(dropKey);
     const asset = this.getAssetById(payload.id) ?? payload;
-    await FXOverlayManager.createFromAsset(asset, event);
+    try {
+      await FXOverlayManager.createFromAsset(asset, event);
+      debugLog("drop complete");
+    } finally {
+      window.setTimeout(() => {
+        this.activeDropKeys.delete(dropKey);
+        if (this.lastDropKey === dropKey) this.lastDropKey = null;
+      }, 750);
+    }
   }
 
   #readPayload(event) {
@@ -74,10 +107,24 @@ export class FXDragDrop {
   }
 
   #isCanvasEvent(event) {
-    return Boolean(event.target?.closest?.("#board, #canvas, canvas"));
+    const view = canvas?.app?.view;
+    if (!(view instanceof HTMLCanvasElement)) return false;
+    const rect = view.getBoundingClientRect();
+    return event.clientX >= rect.left
+      && event.clientX <= rect.right
+      && event.clientY >= rect.top
+      && event.clientY <= rect.bottom;
   }
 
   #hasOverlayPayload(event) {
     return Array.from(event.dataTransfer?.types ?? []).includes(MIME_TYPE);
+  }
+
+  #getCanvasDropTargets() {
+    return [
+      canvas?.app?.view,
+      document.getElementById("board"),
+      document.getElementById("canvas")
+    ].filter((target, index, targets) => target instanceof HTMLElement && targets.indexOf(target) === index);
   }
 }

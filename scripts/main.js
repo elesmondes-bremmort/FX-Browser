@@ -1,6 +1,6 @@
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXBrowserApp } from "./browser.js";
-import { MODULE_ID } from "./constants.js";
+import { CANVAS_CONTROL_ID, CANVAS_TOOL_ID, MODULE_ID } from "./constants.js";
 import { FXOverlayLayer } from "./overlayLayer.js";
 import { FXOverlayRenderer } from "./overlayRenderer.js";
 import { FXSyncManager } from "./syncManager.js";
@@ -53,55 +53,62 @@ function addCanvasControlButton(controls) {
   }
 
   const button = {
-    name: "fx-browser",
+    name: CANVAS_TOOL_ID,
     title: "FX Browser",
     icon: "fa-solid fa-wand-magic-sparkles",
     button: true,
+    toggle: false,
     visible: game.user?.isGM,
-    onClick: () => {
-      debugLog("canvas control click received");
+    onClick: (...args) => {
+      if (!isFXBrowserToolClick(args)) return;
+      debugLog("canvas control click received", CANVAS_TOOL_ID);
       FXBrowserApp.toggle();
     }
   };
 
   if (Array.isArray(controls)) {
-    if (controls.some((control) => control.name === button.name)) return;
+    if (controls.some((control) => control.name === CANVAS_CONTROL_ID)) return;
     controls.push({
-      name: button.name,
+      name: CANVAS_CONTROL_ID,
       title: button.title,
       icon: button.icon,
       layer: "tiles",
-      tools: [button],
-      activeTool: button.name
+      tools: [button]
     });
     debugLog("canvas control button added");
     return;
   }
 
   if (controls instanceof Map) {
-    if (controls.has(button.name)) return;
-    controls.set(button.name, {
-      name: button.name,
+    if (controls.has(CANVAS_CONTROL_ID)) return;
+    controls.set(CANVAS_CONTROL_ID, {
+      name: CANVAS_CONTROL_ID,
       title: button.title,
       icon: button.icon,
       layer: "tiles",
-      tools: new Map([[button.name, button]]),
-      activeTool: button.name
+      tools: new Map([[button.name, button]])
     });
     debugLog("canvas control button added");
     return;
   }
 
-  if (controls?.[button.name]) return;
-  controls[button.name] = {
-    name: button.name,
+  if (controls?.[CANVAS_CONTROL_ID]) return;
+  controls[CANVAS_CONTROL_ID] = {
+    name: CANVAS_CONTROL_ID,
     title: button.title,
     icon: button.icon,
     layer: "tiles",
-    tools: { [button.name]: button },
-    activeTool: button.name
+    tools: { [button.name]: button }
   };
   debugLog("canvas control button added");
+}
+
+function isFXBrowserToolClick(args) {
+  const [first] = args;
+  if (typeof first === "string") return first === CANVAS_TOOL_ID;
+  const target = first?.currentTarget ?? first?.target;
+  const toolName = target?.dataset?.tool ?? target?.closest?.("[data-tool]")?.dataset?.tool;
+  return !toolName || toolName === CANVAS_TOOL_ID;
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {
