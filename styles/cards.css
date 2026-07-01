@@ -6,7 +6,8 @@
   scrollbar-color: #8f6f32 #151312;
   scrollbar-width: thin;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-auto-rows: 96px;
   align-content: start;
   gap: 10px;
   padding: 10px;
@@ -31,6 +32,10 @@
 }
 
 .fx-browser-card {
+  min-height: 96px;
+  height: 96px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
   overflow: hidden;
   cursor: grab;
   background: #211d19;
@@ -43,7 +48,8 @@
 }
 
 .fx-browser-card-media {
-  aspect-ratio: 16 / 9;
+  width: 112px;
+  height: 96px;
   display: grid;
   place-items: center;
   color: #d7b45f;
@@ -65,15 +71,21 @@
 }
 
 .fx-browser-card-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding: 8px;
 }
 
 .fx-browser-card h3 {
-  min-height: 32px;
-  margin: 0 0 8px;
+  margin: 0 0 6px;
+  min-height: 34px;
+  max-height: 34px;
+  overflow: hidden;
   overflow-wrap: anywhere;
   color: #f4ead7;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.25;
 }
 
@@ -84,6 +96,10 @@
 }
 
 .fx-browser-card-badges span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   padding: 2px 6px;
   color: #f8e9bf;
   background: rgb(215 180 95 / 16%);

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.6
+
+- Move FX Browser to a GM-only right-side custom control button with matching dark/gold round styling.
+- Improve asset list readability with fixed-height scrollable cards that keep names, categories, and playback badges visible.
+
 ## 0.0.5
 
 - Stop Foundry native audio handling from creating AmbientSound documents when dropping FX Browser overlays.

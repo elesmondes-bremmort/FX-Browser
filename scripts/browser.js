@@ -127,7 +127,9 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.dragDrop.unbindCanvasDrop();
     await this.#saveWindowState();
     FXBrowserApp.instance = null;
-    return super.close(options);
+    const result = await super.close(options);
+    Hooks.callAll("fxBrowserWindowToggled", false);
+    return result;
   }
 
   setPosition(position = {}) {
@@ -200,12 +202,14 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       if (FXBrowserApp.instance?.rendered) {
         await FXBrowserApp.instance.close();
         debugLog("window closed");
+        Hooks.callAll("fxBrowserWindowToggled", false);
         return;
       }
 
       FXBrowserApp.instance = FXBrowserApp.instance ?? new FXBrowserApp();
       await FXBrowserApp.instance.render({ force: true });
       debugLog("window opened");
+      Hooks.callAll("fxBrowserWindowToggled", true);
     } catch (error) {
       console.error("FX Browser | Failed to toggle browser window", error);
       notify(game.i18n.localize("fx-browser.errors.windowToggle"), "error");
