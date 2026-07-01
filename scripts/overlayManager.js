@@ -10,7 +10,7 @@ export class FXOverlayManager {
   static getOverlays(scene = this.getScene()) {
     if (!scene) return [];
     return scene.tiles
-      .filter((tile) => tile.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY))
+      .filter((tile) => this.isOverlayDocument(tile))
       .map((tile) => this.fromTile(tile))
       .sort((a, b) => (a.zIndex - b.zIndex) || a.name.localeCompare(b.name));
   }
@@ -19,7 +19,7 @@ export class FXOverlayManager {
     const data = tile.getFlag(FLAGS.SCOPE, FLAGS.DATA) ?? {};
     return {
       id: tile.id,
-      assetPath: tile.texture?.src ?? data.assetPath ?? "",
+      assetPath: tile.getFlag(FLAGS.SCOPE, "assetPath") ?? tile.texture?.src ?? data.assetPath ?? "",
       name: tile.name ?? data.name ?? "FX Overlay",
       x: tile.x,
       y: tile.y,
@@ -30,7 +30,7 @@ export class FXOverlayManager {
       loop: tile.video?.loop ?? data.loop ?? true,
       visible: !tile.hidden,
       locked: Boolean(tile.locked),
-      zIndex: tile.elevation ?? data.zIndex ?? 0,
+      zIndex: tile.elevation ?? tile.sort ?? data.zIndex ?? 0,
       type: data.type ?? "webm",
       tileId: tile.id
     };
@@ -96,7 +96,7 @@ export class FXOverlayManager {
     if (!game.user?.isGM) return null;
     const scene = this.getScene();
     const tile = scene?.tiles.get(id);
-    if (!tile?.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY)) return null;
+    if (!this.isOverlayDocument(tile)) return null;
 
     const current = this.fromTile(tile);
     const next = { ...current, ...updates };
@@ -111,6 +111,7 @@ export class FXOverlayManager {
       hidden: !next.visible,
       locked: Boolean(next.locked),
       elevation: Number(next.zIndex) || 0,
+      sort: Number(next.zIndex) || 0,
       video: {
         autoplay: true,
         loop: Boolean(next.loop),
@@ -118,6 +119,9 @@ export class FXOverlayManager {
       },
       flags: {
         [FLAGS.SCOPE]: {
+          overlay: true,
+          assetPath: next.assetPath,
+          createdBy: "fx-browser",
           [FLAGS.IS_OVERLAY]: true,
           [FLAGS.DATA]: {
             id,
@@ -149,7 +153,7 @@ export class FXOverlayManager {
     if (!game.user?.isGM) return;
     const scene = this.getScene();
     const tile = scene?.tiles.get(id);
-    if (!tile?.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY)) return;
+    if (!this.isOverlayDocument(tile)) return;
     await scene.deleteEmbeddedDocuments("Tile", [id]);
     Hooks.callAll("fxBrowserOverlayChanged", scene, null);
   }
@@ -159,19 +163,28 @@ export class FXOverlayManager {
     const scene = this.getScene();
     if (!scene) return;
     const ids = scene.tiles
-      .filter((tile) => tile.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY))
+      .filter((tile) => this.isOverlayDocument(tile))
       .map((tile) => tile.id);
     if (!ids.length) return;
     await scene.deleteEmbeddedDocuments("Tile", ids);
     Hooks.callAll("fxBrowserOverlayChanged", scene, null);
   }
 
-  static async selectOverlay(id) {
-    const tileObject = canvas?.tiles?.placeables?.find((tile) => tile.document.id === id);
-    if (!tileObject) return;
-    canvas.tiles?.activate?.();
-    tileObject.control?.({ releaseOthers: true });
-    canvas.animatePan?.({ x: tileObject.center.x, y: tileObject.center.y, duration: 250 });
+  static getPlaceable(id) {
+    return canvas?.tiles?.placeables?.find((tile) => tile.document?.id === id) ?? null;
+  }
+
+  static isOverlayDocument(tile) {
+    if (!tile) return false;
+    if (tile.getFlag?.(FLAGS.SCOPE, "overlay") === true) return true;
+    if (tile.getFlag?.(FLAGS.SCOPE, FLAGS.IS_OVERLAY)) return true;
+    const data = tile.getFlag?.(FLAGS.SCOPE, FLAGS.DATA) ?? {};
+    const src = tile.texture?.src ?? data.assetPath ?? "";
+    return typeof src === "string" && src.toLowerCase().includes(".webm");
+  }
+
+  static isOverlayPlaceable(tile) {
+    return this.isOverlayDocument(tile?.document);
   }
 
   static #toTileData(overlay) {
@@ -186,6 +199,7 @@ export class FXOverlayManager {
       hidden: !overlay.visible,
       locked: overlay.locked,
       elevation: overlay.zIndex,
+      sort: overlay.zIndex,
       texture: {
         src: overlay.assetPath,
         scaleX: 1,
@@ -198,6 +212,9 @@ export class FXOverlayManager {
       },
       flags: {
         [FLAGS.SCOPE]: {
+          overlay: true,
+          assetPath: overlay.assetPath,
+          createdBy: "fx-browser",
           [FLAGS.IS_OVERLAY]: true,
           [FLAGS.DATA]: overlay
         }

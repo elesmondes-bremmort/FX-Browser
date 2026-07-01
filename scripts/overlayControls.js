@@ -11,10 +11,9 @@ export class FXOverlayControls {
 
   activate(selectedId) {
     this.root.querySelectorAll("[data-overlay-select]").forEach((button) => {
-      button.addEventListener("click", async () => {
+      button.addEventListener("click", () => {
         const id = button.dataset.overlaySelect;
-        FXOverlayLayer.setEditMode(true);
-        await FXOverlayManager.selectOverlay(id);
+        FXOverlayLayer.selectOverlay(id, { pan: true });
         this.onChange?.(id);
       });
     });

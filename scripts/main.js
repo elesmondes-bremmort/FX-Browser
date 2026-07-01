@@ -59,8 +59,7 @@ function addCanvasControlButton(controls) {
     button: true,
     toggle: false,
     visible: game.user?.isGM,
-    onClick: (...args) => {
-      if (!isFXBrowserToolClick(args)) return;
+    onChange: () => {
       debugLog("canvas control click received", CANVAS_TOOL_ID);
       FXBrowserApp.toggle();
     }
@@ -71,8 +70,8 @@ function addCanvasControlButton(controls) {
     icon: "fa-solid fa-fire",
     toggle: true,
     visible: game.user?.isGM,
-    onClick: (active = true) => {
-      FXOverlayLayer.setEditMode(Boolean(active));
+    onChange: (...args) => {
+      FXOverlayLayer.setEditMode(getToolActiveState(args));
       window.setTimeout(() => FXOverlayLayer.syncEditModeFromControls(), 0);
     }
   };
@@ -136,12 +135,10 @@ function ensureControlTools(control, tools) {
   }
 }
 
-function isFXBrowserToolClick(args) {
-  const [first] = args;
-  if (typeof first === "string") return first === CANVAS_TOOL_ID;
-  const target = first?.currentTarget ?? first?.target;
-  const toolName = target?.dataset?.tool ?? target?.closest?.("[data-tool]")?.dataset?.tool;
-  return !toolName || toolName === CANVAS_TOOL_ID;
+function getToolActiveState(args) {
+  const explicit = args.find((arg) => typeof arg === "boolean");
+  if (typeof explicit === "boolean") return explicit;
+  return true;
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {

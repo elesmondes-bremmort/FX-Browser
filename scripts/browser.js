@@ -86,16 +86,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     new FXOverlayControls(root, (id) => {
       this.selectedOverlayId = id;
       this.render({ force: true });
-    }, () => {
-      this.formState = {
-        type: "delete-all-overlays",
-        title: "Supprimer tous les FX",
-        message: "Supprimer tous les FX Overlay de cette scène ?",
-        submitLabel: "Supprimer",
-        isConfirm: true
-      };
-      this.render({ force: true });
-    }).activate(this.selectedOverlayId);
+    }, () => this.#confirmDeleteAllOverlays()).activate(this.selectedOverlayId);
 
     root.addEventListener("click", (event) => {
       if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
@@ -451,14 +442,45 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       const asset = this.library.assets.find((item) => item.id === this.formState.assetId);
       if (asset) await FXLibraryManager.moveAsset(asset.path, data.get("folderId"), asset.sourceId, asset.sourceEnabled);
     }
-    if (type === "delete-all-overlays") {
-      await FXOverlayManager.deleteAllOverlays();
-      this.selectedOverlayId = null;
-    }
-
     this.formState = null;
     this.#refreshLibrary();
     this.render({ force: true });
+  }
+
+  async #confirmDeleteAllOverlays() {
+    const confirmed = await this.#confirmDialog({
+      title: "Supprimer tous les FX",
+      content: "<p>Supprimer tous les FX Overlay de cette scène ?</p>",
+      yes: "Supprimer",
+      no: "Annuler"
+    });
+    if (!confirmed) return;
+    await FXOverlayManager.deleteAllOverlays();
+    this.selectedOverlayId = null;
+    this.render({ force: true });
+  }
+
+  async #confirmDialog({ title, content, yes, no }) {
+    const dialogV2 = foundry?.applications?.api?.DialogV2;
+    if (dialogV2?.confirm) {
+      return Boolean(await dialogV2.confirm({
+        window: { title },
+        content,
+        yes: { label: yes },
+        no: { label: no },
+        modal: true
+      }));
+    }
+
+    return new Promise((resolve) => {
+      Dialog.confirm({
+        title,
+        content,
+        yes: () => resolve(true),
+        no: () => resolve(false),
+        defaultYes: false
+      });
+    });
   }
 
   static async toggle() {

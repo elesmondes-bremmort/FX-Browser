@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.14
+
+- Add manual FX tile hit testing in scene coordinates so high z-index overlays can be selected independently of native Tile selection.
+- Add a PIXI selection frame and label for the active FX Overlay, with click-empty deselection and manual drag-to-move updates.
+- Mark new overlays with robust `fx-browser` flags and include fallback detection for older WebM overlays.
+- Move Scene Controls wiring to Foundry v13 `onChange` and use Foundry Dialog confirmation for scene-wide FX cleanup.
+
 ## 0.0.13
 
 - Add an FX Overlay edit tool to the native canvas controls so scene FX can be selected, moved, focused, edited, and deleted on demand.
