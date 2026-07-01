@@ -1,16 +1,19 @@
 import { FXOverlayManager } from "./overlayManager.js";
+import { FXOverlayLayer } from "./overlayLayer.js";
 import { clampNumber } from "./utils.js";
 
 export class FXOverlayControls {
-  constructor(root, onChange) {
+  constructor(root, onChange, onDeleteAll) {
     this.root = root;
     this.onChange = onChange;
+    this.onDeleteAll = onDeleteAll;
   }
 
   activate(selectedId) {
     this.root.querySelectorAll("[data-overlay-select]").forEach((button) => {
       button.addEventListener("click", async () => {
         const id = button.dataset.overlaySelect;
+        FXOverlayLayer.setEditMode(true);
         await FXOverlayManager.selectOverlay(id);
         this.onChange?.(id);
       });
@@ -26,6 +29,8 @@ export class FXOverlayControls {
         this.onChange?.(null);
       });
     });
+
+    this.root.querySelector("[data-overlay-delete-all]")?.addEventListener("click", () => this.onDeleteAll?.());
 
     const form = this.root.querySelector("[data-overlay-form]");
     if (!form || !selectedId) return;

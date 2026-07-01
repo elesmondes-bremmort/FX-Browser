@@ -1,5 +1,11 @@
 <section class="fx-browser-overlay-list">
-  <h2>{{localize "fx-browser.overlays.title"}}</h2>
+  <div class="fx-browser-overlay-list-header">
+    <h2>{{localize "fx-browser.overlays.title"}}</h2>
+    <button type="button" class="fx-browser-danger" data-overlay-delete-all>
+      <i class="fa-solid fa-trash"></i>
+      Supprimer tous les FX de la scène
+    </button>
+  </div>
   {{#if overlays.length}}
     <div class="fx-browser-overlay-items">
       {{#each overlays}}

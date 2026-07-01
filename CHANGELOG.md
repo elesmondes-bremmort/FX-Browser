@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.13
+
+- Add an FX Overlay edit tool to the native canvas controls so scene FX can be selected, moved, focused, edited, and deleted on demand.
+- Disable FX Overlay tile interactivity outside FX edit mode so high z-index effects no longer block native Token, Tile, Lighting, Wall, or other tools.
+- Default new FX Overlays to z-index 10 while keeping the value editable.
+- Add Delete-key removal for the selected FX and an internal confirmation flow to delete all FX Overlays from the current scene.
+
 ## 0.0.12
 
 - Simplify the main library navigation around virtual tabs: ALL, FAVORIS, and GM-created folders.

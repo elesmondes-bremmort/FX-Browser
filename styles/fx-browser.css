@@ -280,6 +280,13 @@
   font-size: 16px;
 }
 
+.fx-browser-inline-form p {
+  margin: 0;
+  color: var(--fx-text);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .fx-browser-inline-form label {
   display: flex;
   flex-direction: column;

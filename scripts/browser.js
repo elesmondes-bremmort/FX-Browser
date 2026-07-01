@@ -86,6 +86,15 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     new FXOverlayControls(root, (id) => {
       this.selectedOverlayId = id;
       this.render({ force: true });
+    }, () => {
+      this.formState = {
+        type: "delete-all-overlays",
+        title: "Supprimer tous les FX",
+        message: "Supprimer tous les FX Overlay de cette scène ?",
+        submitLabel: "Supprimer",
+        isConfirm: true
+      };
+      this.render({ force: true });
     }).activate(this.selectedOverlayId);
 
     root.addEventListener("click", (event) => {
@@ -441,6 +450,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     if (type === "asset-move") {
       const asset = this.library.assets.find((item) => item.id === this.formState.assetId);
       if (asset) await FXLibraryManager.moveAsset(asset.path, data.get("folderId"), asset.sourceId, asset.sourceEnabled);
+    }
+    if (type === "delete-all-overlays") {
+      await FXOverlayManager.deleteAllOverlays();
+      this.selectedOverlayId = null;
     }
 
     this.formState = null;

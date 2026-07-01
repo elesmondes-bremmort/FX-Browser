@@ -2,6 +2,7 @@ export const MODULE_ID = "fx-browser";
 export const MODULE_TITLE = "FX Browser";
 export const CANVAS_CONTROL_ID = "fx-browser-control";
 export const CANVAS_TOOL_ID = "fx-browser-open-browser";
+export const CANVAS_EDIT_TOOL_ID = "fx-browser-overlay-edit";
 
 export const SETTINGS = {
   CUSTOM_DIRECTORIES: "customDirectories",
@@ -35,8 +36,8 @@ export const DEFAULT_PLACEMENT = {
   loop: true,
   visible: true,
   locked: false,
-  elevation: 0,
-  zIndex: 0,
+  elevation: 10,
+  zIndex: 10,
   name: ""
 };
 

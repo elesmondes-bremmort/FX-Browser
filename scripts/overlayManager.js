@@ -69,7 +69,7 @@ export class FXOverlayManager {
       loop: Boolean(placement.loop),
       visible: placement.visible !== false,
       locked: Boolean(placement.locked),
-      zIndex: Number(placement.zIndex ?? placement.elevation) || 0,
+      zIndex: Number.isFinite(Number(placement.zIndex ?? placement.elevation)) ? Number(placement.zIndex ?? placement.elevation) : DEFAULT_PLACEMENT.zIndex,
       type: "webm"
     };
 
@@ -151,6 +151,18 @@ export class FXOverlayManager {
     const tile = scene?.tiles.get(id);
     if (!tile?.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY)) return;
     await scene.deleteEmbeddedDocuments("Tile", [id]);
+    Hooks.callAll("fxBrowserOverlayChanged", scene, null);
+  }
+
+  static async deleteAllOverlays() {
+    if (!game.user?.isGM) return;
+    const scene = this.getScene();
+    if (!scene) return;
+    const ids = scene.tiles
+      .filter((tile) => tile.getFlag(FLAGS.SCOPE, FLAGS.IS_OVERLAY))
+      .map((tile) => tile.id);
+    if (!ids.length) return;
+    await scene.deleteEmbeddedDocuments("Tile", ids);
     Hooks.callAll("fxBrowserOverlayChanged", scene, null);
   }
 

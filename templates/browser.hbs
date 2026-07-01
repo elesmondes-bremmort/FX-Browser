@@ -153,8 +153,11 @@
             </select>
           </label>
         {{/if}}
+        {{#if formState.isConfirm}}
+          <p>{{formState.message}}</p>
+        {{/if}}
         <div class="fx-browser-form-actions">
-          <button type="submit">Valider</button>
+          <button type="submit">{{#if formState.submitLabel}}{{formState.submitLabel}}{{else}}Valider{{/if}}</button>
           <button type="button" data-form-cancel>Annuler</button>
         </div>
       </form>

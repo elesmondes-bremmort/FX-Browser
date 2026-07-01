@@ -1,6 +1,6 @@
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXBrowserApp } from "./browser.js";
-import { CANVAS_CONTROL_ID, CANVAS_TOOL_ID, MODULE_ID } from "./constants.js";
+import { CANVAS_CONTROL_ID, CANVAS_EDIT_TOOL_ID, CANVAS_TOOL_ID, MODULE_ID } from "./constants.js";
 import { FXOverlayLayer } from "./overlayLayer.js";
 import { FXOverlayRenderer } from "./overlayRenderer.js";
 import { FXSyncManager } from "./syncManager.js";
@@ -65,32 +65,75 @@ function addCanvasControlButton(controls) {
       FXBrowserApp.toggle();
     }
   };
+  const editTool = {
+    name: CANVAS_EDIT_TOOL_ID,
+    title: "FX Overlay",
+    icon: "fa-solid fa-fire",
+    toggle: true,
+    visible: game.user?.isGM,
+    onClick: (active = true) => {
+      FXOverlayLayer.setEditMode(Boolean(active));
+      window.setTimeout(() => FXOverlayLayer.syncEditModeFromControls(), 0);
+    }
+  };
 
   const control = {
     name: CANVAS_CONTROL_ID,
     title: "FX Browser",
     icon: button.icon,
     layer: "tiles",
-    tools: [button]
+    tools: [button, editTool]
   };
 
   if (Array.isArray(controls)) {
-    if (controls.some((item) => item.name === CANVAS_CONTROL_ID)) return;
+    const existing = controls.find((item) => item.name === CANVAS_CONTROL_ID);
+    if (existing) {
+      ensureControlTools(existing, [button, editTool]);
+      return;
+    }
     controls.push(control);
     debugLog("canvas control button added");
     return;
   }
 
   if (controls instanceof Map) {
-    if (controls.has(CANVAS_CONTROL_ID)) return;
-    controls.set(CANVAS_CONTROL_ID, { ...control, tools: new Map([[button.name, button]]) });
+    if (controls.has(CANVAS_CONTROL_ID)) {
+      ensureControlTools(controls.get(CANVAS_CONTROL_ID), [button, editTool]);
+      return;
+    }
+    controls.set(CANVAS_CONTROL_ID, { ...control, tools: new Map([[button.name, button], [editTool.name, editTool]]) });
     debugLog("canvas control button added");
     return;
   }
 
-  if (controls?.[CANVAS_CONTROL_ID]) return;
-  controls[CANVAS_CONTROL_ID] = { ...control, tools: { [button.name]: button } };
+  if (controls?.[CANVAS_CONTROL_ID]) {
+    ensureControlTools(controls[CANVAS_CONTROL_ID], [button, editTool]);
+    return;
+  }
+  controls[CANVAS_CONTROL_ID] = { ...control, tools: { [button.name]: button, [editTool.name]: editTool } };
   debugLog("canvas control button added");
+}
+
+function ensureControlTools(control, tools) {
+  if (!control) return;
+  if (control.tools instanceof Map) {
+    for (const tool of tools) {
+      if (!control.tools.has(tool.name)) control.tools.set(tool.name, tool);
+    }
+    return;
+  }
+
+  if (Array.isArray(control.tools)) {
+    for (const tool of tools) {
+      if (!control.tools.some((item) => item.name === tool.name)) control.tools.push(tool);
+    }
+    return;
+  }
+
+  control.tools = control.tools ?? {};
+  for (const tool of tools) {
+    if (!control.tools[tool.name]) control.tools[tool.name] = tool;
+  }
 }
 
 function isFXBrowserToolClick(args) {
