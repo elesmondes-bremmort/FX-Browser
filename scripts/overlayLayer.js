@@ -26,7 +26,16 @@ export class FXOverlayLayer {
       this.redrawSelection();
       this.applyAll();
     });
-    Hooks.on("renderSceneControls", () => this.syncEditModeFromControls());
+    Hooks.once("ready", () => this.applyAll());
+    Hooks.on("renderSceneControls", () => {
+      this.syncEditModeFromControls();
+      this.applyAll();
+      window.setTimeout(() => this.applyAll(), 0);
+    });
+    Hooks.on("activateTilesLayer", () => this.applyAll());
+    Hooks.on("createTile", (tile) => {
+      window.setTimeout(() => this.applyTileInteractivity(FXOverlayManager.getPlaceable(tile.id)), 0);
+    });
     Hooks.on("drawTile", (tile) => this.applyTileInteractivity(tile));
     Hooks.on("updateTile", (tile) => {
       this.applyTileInteractivity(tile);
@@ -37,6 +46,7 @@ export class FXOverlayLayer {
     });
     Hooks.on("controlTile", (tile, controlled) => {
       if (!controlled || !FXOverlayManager.isOverlayPlaceable(tile)) return;
+      if (this.isNativeTileSelectActive()) return;
       if (!this.isEditModeActive()) {
         tile.release?.();
         return;
@@ -69,6 +79,10 @@ export class FXOverlayLayer {
     return this.active || this.#getActiveToolName() === CANVAS_EDIT_TOOL_ID;
   }
 
+  static isNativeTileSelectActive() {
+    return this.#getActiveControlName() === "tiles" && this.#getActiveToolName() === "select";
+  }
+
   static selectOverlay(id, { pan = false } = {}) {
     if (!id) return;
     const tile = FXOverlayManager.getPlaceable(id);
@@ -92,9 +106,9 @@ export class FXOverlayLayer {
 
   static applyTileInteractivity(tile) {
     if (!FXOverlayManager.isOverlayPlaceable(tile)) return;
-    const active = this.isEditModeActive();
+    const active = this.isNativeTileSelectActive();
     this.#setTilePointerState(tile, active);
-    if (!active && tile.controlled) tile.release?.();
+    if (!active && !this.isEditModeActive() && tile.controlled) tile.release?.();
   }
 
   static findFxAtPoint(sceneX, sceneY) {
@@ -200,7 +214,7 @@ export class FXOverlayLayer {
   }
 
   static #onPointerMove(event) {
-    if (!this.isEditModeActive() || !this.dragState) return;
+    if (!this.dragState) return;
     const point = this.#eventToScenePoint(event);
     if (!point) return;
 
@@ -297,9 +311,13 @@ export class FXOverlayLayer {
   }
 
   static #getActiveToolName() {
-    const tool = ui?.controls?.tool ?? ui?.controls?.activeTool;
-    if (typeof tool === "string") return tool;
+    const tool = ui?.controls?.tool;
     return tool?.name ?? null;
+  }
+
+  static #getActiveControlName() {
+    const control = ui?.controls?.control;
+    return control?.name ?? null;
   }
 
   static #setTilePointerState(tile, active) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.16
+
+- Restore native Foundry Tiles/select interaction for FX Browser overlays while keeping pass-through behavior in other controls.
+- Reapply FX tile interactivity on ready, canvas ready, tile creation, scene-control changes, and Tiles layer activation.
+- Keep FX drops lightweight by creating only the Tile document and avoiding full app refreshes or layer redraws during drop.
+
 ## 0.0.15
 
 - Restore FX Browser tile interactivity while the FX Overlay edit tool is active, with pointer cursor support for selectable scene FX.

@@ -80,10 +80,7 @@ export class FXOverlayManager {
       const created = await canvas.scene.createEmbeddedDocuments("Tile", [tileData], { fxBrowserDrop: true });
       debugLog("update scene flags");
       const tile = created?.[0] ?? null;
-      if (tile) {
-        await this.#renderTile(tile);
-        Hooks.callAll("fxBrowserOverlayChanged", canvas.scene, this.fromTile(tile));
-      }
+      if (tile) this.#refreshPlaceable(tile);
       return tile;
     } catch (error) {
       console.error("FX Browser | Failed to create FX Overlay", error);
@@ -228,15 +225,10 @@ export class FXOverlayManager {
     return canvas.stage.worldTransform.applyInverse(point);
   }
 
-  static async #renderTile(tile) {
+  static #refreshPlaceable(tile) {
     debugLog("render overlay", tile.id);
     const layer = canvas?.tiles;
     const placeable = layer?.placeables?.find((item) => item.document?.id === tile.id);
-    if (placeable) {
-      placeable.refresh?.();
-      return;
-    }
-
-    await layer?.draw?.();
+    placeable?.refresh?.();
   }
 }
