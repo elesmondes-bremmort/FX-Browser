@@ -3,6 +3,7 @@ import { DEFAULT_WINDOW_STATE, EMPTY_LIBRARY_MESSAGE } from "./constants.js";
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
 import { FXLibraryManager } from "./libraryManager.js";
+import { FXOriginVaultSources } from "./originVaultSources.js";
 import { FXOverlayControls } from "./overlayControls.js";
 import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
@@ -60,6 +61,8 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     return {
       categories: CATEGORIES.map((category) => ({ ...category, active: category.id === this.category })),
       sources: this.library.sources.map((source) => ({ ...source, active: this.sourceFilter === source.id })),
+      configuredSources: this.#getConfiguredSourceContext(),
+      originVaultAvailable: FXOriginVaultSources.isAvailable(),
       folders: this.library.folders.map((folder) => ({ ...folder, active: this.folderFilter === folder.id })),
       librarySections: {
         all: this.specialFilter === "all",
@@ -99,6 +102,24 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
         this.sourceFilter = button.dataset.sourceFilter;
         this.specialFilter = "all";
         this.folderFilter = "";
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelector("[data-source-add]")?.addEventListener("click", () => this.#addOriginVaultSource());
+    root.querySelector("[data-source-rescan]")?.addEventListener("click", () => this.#rescanLibrary());
+    root.querySelectorAll("[data-source-toggle]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await FXOriginVaultSources.toggleSource(button.dataset.sourceToggle);
+        this.assets = await FXAssetScanner.scan({ notifyResult: false });
+        this.render({ force: true });
+      });
+    });
+    root.querySelectorAll("[data-source-remove]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await FXOriginVaultSources.removeSource(button.dataset.sourceRemove);
+        this.assets = await FXAssetScanner.scan({ notifyResult: false });
+        this.sourceFilter = "all";
         this.render({ force: true });
       });
     });
@@ -234,10 +255,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   }
 
   static async #onRescan() {
-    this.assets = await FXAssetScanner.scan();
-    this.#refreshLibrary();
-    this.selectedAsset = this.assets[0] ?? null;
-    this.render({ force: true });
+    await this.#rescanLibrary();
   }
 
   refreshOverlays() {
@@ -251,6 +269,40 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   #refreshLibrary() {
     this.library = FXLibraryManager.buildLibrary(this.assets);
+  }
+
+  async #rescanLibrary() {
+    this.assets = await FXAssetScanner.scan();
+    this.#refreshLibrary();
+    this.selectedAsset = this.library.assets.find((asset) => !asset.missing) ?? null;
+    this.render({ force: true });
+  }
+
+  #getConfiguredSourceContext() {
+    const counts = new Map(this.library.sources.map((source) => [source.id, source.count]));
+    return FXOriginVaultSources.getSources().map((source) => ({
+      ...source,
+      count: counts.get(source.id) ?? 0,
+      active: this.sourceFilter === source.id
+    }));
+  }
+
+  async #addOriginVaultSource() {
+    const discovered = FXOriginVaultSources.discoverRepositories();
+    const options = discovered.map((source, index) => `${index + 1}. ${source.name} (${source.path})`).join("\n");
+    const choice = options ? window.prompt(`Repository Origin Vault à ajouter, ou chemin manuel:\n${options}`, "1") : window.prompt("Chemin du repository / dossier Origin Vault", "");
+    if (!choice) return;
+
+    const selected = discovered[Number(choice) - 1];
+    if (selected) {
+      await FXOriginVaultSources.addSource({ ...selected, enabled: true });
+    } else {
+      const name = window.prompt("Nom de la source Origin Vault", "Origin Vault");
+      await FXOriginVaultSources.addSource({ name: name || "Origin Vault", path: choice, enabled: true });
+    }
+
+    this.assets = await FXAssetScanner.scan({ notifyResult: false });
+    this.render({ force: true });
   }
 
   async #renderAssetList() {
@@ -275,13 +327,13 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
     if (action === "rename") {
       const name = window.prompt("Nouveau nom virtuel", asset.displayName || asset.name);
-      if (name !== null) await FXLibraryManager.renameAsset(asset.path, name, asset.sourceId);
+      if (name !== null) await FXLibraryManager.renameAsset(asset.path, name, asset.sourceId, asset.sourceEnabled);
     } else if (action === "favorite") {
-      await FXLibraryManager.toggleFavorite(asset.path, asset.sourceId);
+      await FXLibraryManager.toggleFavorite(asset.path, asset.sourceId, asset.sourceEnabled);
     } else if (action === "move") {
       const folders = this.library.folders.map((folder) => `${folder.id}: ${folder.name}`).join("\n");
       const folderId = window.prompt(`Dossier cible (laisser vide pour retirer):\n${folders}`, asset.virtualFolderId || "");
-      if (folderId !== null) await FXLibraryManager.moveAsset(asset.path, folderId, asset.sourceId);
+      if (folderId !== null) await FXLibraryManager.moveAsset(asset.path, folderId, asset.sourceId, asset.sourceEnabled);
     }
 
     this.#refreshLibrary();

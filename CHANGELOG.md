@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.10
+
+- Add persistent Origin Vault source selection with enabled/disabled repositories, manual source entry, and recursive scanning.
+- Make Origin Vault the primary FX source while keeping direct JB2A scanning optional.
+- Persist virtual organization metadata with Origin Vault repository ids, item ids, folder parent/sort data, favorites, and display names.
+
 ## 0.0.9
 
 - Fix search input focus loss by updating only the asset grid with a light debounce while typing.

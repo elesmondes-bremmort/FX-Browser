@@ -17,6 +17,28 @@
         <button type="button" class="{{#if librarySections.favorites}}active{{/if}}" data-special-filter="favorites">Favoris</button>
         <button type="button" class="{{#if librarySections.personal}}active{{/if}}" data-special-filter="personal">Mes effets</button>
       </div>
+      <div class="fx-browser-nav-section fx-browser-source-manager">
+        <h2>Sources</h2>
+        {{#unless originVaultAvailable}}
+          <p>Origin Vault absent ou inactif. Les sources manuelles restent disponibles.</p>
+        {{/unless}}
+        <button type="button" data-source-add>Ajouter une source</button>
+        <button type="button" data-source-rescan>Rescanner</button>
+        {{#each configuredSources}}
+          <div class="fx-browser-source-row">
+            <button type="button" class="{{#if active}}active{{/if}}" data-source-filter="{{id}}" title="{{path}}">
+              <span>Origin Vault — {{name}}</span>
+              <small>{{path}} · {{count}}</small>
+            </button>
+            <button type="button" title="Activer / désactiver" data-source-toggle="{{id}}">
+              {{#if enabled}}On{{else}}Off{{/if}}
+            </button>
+            <button type="button" title="Retirer" data-source-remove="{{id}}">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        {{/each}}
+      </div>
       <div class="fx-browser-nav-section" data-folder-list>
         <h2>Dossiers personnels</h2>
         {{#each folders}}

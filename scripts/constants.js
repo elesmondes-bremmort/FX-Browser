@@ -9,7 +9,9 @@ export const SETTINGS = {
   PLACEMENT: "placementSettings",
   ASSET_CACHE: "assetCache",
   LAST_SCAN: "lastScan",
-  LIBRARY_ORGANIZATION: "libraryOrganization"
+  LIBRARY_ORGANIZATION: "libraryOrganization",
+  ORIGIN_VAULT_SOURCES: "originVaultSources",
+  INCLUDE_JB2A_SOURCES: "includeJb2aSources"
 };
 
 export const FLAGS = {
@@ -51,6 +53,8 @@ export const DEFAULT_LIBRARY_ORGANIZATION = {
   folders: [],
   assets: {}
 };
+
+export const DEFAULT_ORIGIN_VAULT_SOURCES = [];
 
 export const EMPTY_LIBRARY_MESSAGE = "Aucune bibliothèque d'effets détectée.";
 export const MISSING_ASSET_MESSAGE = "FX introuvable ou inaccessible.";

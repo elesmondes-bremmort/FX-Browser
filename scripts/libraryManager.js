@@ -1,4 +1,5 @@
 import { FXBrowserSettings } from "./settings.js";
+import { FXOriginVaultSources } from "./originVaultSources.js";
 import { cleanAssetName, stableId } from "./utils.js";
 
 const PERSONAL_SOURCE_ID = "personal-virtual";
@@ -17,30 +18,32 @@ export class FXLibraryManager {
     const sources = this.#buildSources(enrichedAssets);
     return {
       assets: enrichedAssets,
-      folders: organization.folders,
+      folders: organization.folders.sort((a, b) => (Number(a.sort) || 0) - (Number(b.sort) || 0) || a.name.localeCompare(b.name)),
       sources
     };
   }
 
-  static async renameAsset(assetPath, displayName, source = "") {
-    await this.#updateAsset(assetPath, { displayName: String(displayName ?? "").trim() || cleanAssetName(assetPath), source });
+  static async renameAsset(assetPath, displayName, source = "", sourceEnabled = true) {
+    await this.#updateAsset(assetPath, { displayName: String(displayName ?? "").trim() || cleanAssetName(assetPath), source, sourceEnabled });
   }
 
-  static async toggleFavorite(assetPath, source = "") {
+  static async toggleFavorite(assetPath, source = "", sourceEnabled = true) {
     const organization = FXBrowserSettings.getLibraryOrganization();
     const current = organization.assets[assetPath] ?? {};
-    await this.#updateAsset(assetPath, { favorite: !current.favorite, source });
+    await this.#updateAsset(assetPath, { favorite: !current.favorite, source, sourceEnabled });
   }
 
-  static async moveAsset(assetPath, virtualFolderId, source = "") {
-    await this.#updateAsset(assetPath, { virtualFolderId: virtualFolderId || "", source });
+  static async moveAsset(assetPath, virtualFolderId, source = "", sourceEnabled = true) {
+    await this.#updateAsset(assetPath, { virtualFolderId: virtualFolderId || "", source, sourceEnabled });
   }
 
-  static async createFolder(name) {
+  static async createFolder(name, parentId = "") {
     const organization = FXBrowserSettings.getLibraryOrganization();
     const folder = {
       id: stableId(`folder-${name}-${Date.now()}`),
-      name: String(name ?? "").trim() || "Nouveau dossier"
+      name: String(name ?? "").trim() || "Nouveau dossier",
+      parentId,
+      sort: organization.folders.length
     };
     organization.folders = [...organization.folders, folder];
     await FXBrowserSettings.setLibraryOrganization(organization);
@@ -72,6 +75,11 @@ export class FXLibraryManager {
       sourceId: metadata.source || asset.sourceId || PERSONAL_SOURCE_ID,
       sourceName: asset.sourceName || "Dossier personnel",
       sourcePath: asset.sourcePath || "",
+      originVaultRepositoryId: metadata.originVaultRepositoryId || asset.originVaultRepositoryId || "",
+      originVaultItemId: metadata.originVaultItemId || asset.originVaultItemId || "",
+      originalName: asset.originalName || asset.name,
+      assetPath: asset.assetPath || asset.path,
+      sourceEnabled: metadata.sourceEnabled ?? asset.sourceEnabled !== false,
       missing: false
     };
   }
@@ -80,6 +88,8 @@ export class FXLibraryManager {
     return {
       id: stableId(assetPath),
       path: assetPath,
+      assetPath,
+      originalName: cleanAssetName(assetPath),
       name: metadata.displayName || cleanAssetName(assetPath),
       displayName: metadata.displayName || cleanAssetName(assetPath),
       fileName: assetPath.split("/").pop() ?? assetPath,
@@ -89,6 +99,9 @@ export class FXLibraryManager {
       sourceId: metadata.source || PERSONAL_SOURCE_ID,
       sourceName: this.#sourceName(metadata.source),
       sourcePath: "",
+      originVaultRepositoryId: metadata.originVaultRepositoryId || metadata.source || "",
+      originVaultItemId: metadata.originVaultItemId || "",
+      sourceEnabled: this.#isSourceEnabled(metadata.source),
       missing: true,
       favorite: Boolean(metadata.favorite),
       virtualFolderId: metadata.virtualFolderId || ""
@@ -112,10 +125,18 @@ export class FXLibraryManager {
   }
 
   static #sourceName(sourceId) {
+    const source = FXOriginVaultSources.getSources().find((item) => item.id === sourceId);
+    if (source) return source.name;
     if (sourceId === "jb2a-free") return "JB2A Free";
     if (sourceId === "jb2a-patreon") return "JB2A Patreon";
     if (sourceId) return "Dossier custom";
     return "Dossier personnel";
+  }
+
+  static #isSourceEnabled(sourceId) {
+    if (!sourceId) return false;
+    const source = FXOriginVaultSources.getSources().find((item) => item.id === sourceId);
+    return source?.enabled === true;
   }
 
   static async #updateAsset(assetPath, updates) {
@@ -124,8 +145,11 @@ export class FXLibraryManager {
     organization.assets[assetPath] = {
       assetPath,
       source: updates.source ?? current.source ?? "",
+      originVaultRepositoryId: updates.originVaultRepositoryId ?? current.originVaultRepositoryId ?? updates.source ?? current.source ?? "",
+      originVaultItemId: updates.originVaultItemId ?? current.originVaultItemId ?? "",
       displayName: updates.displayName ?? current.displayName ?? "",
       virtualFolderId: updates.virtualFolderId ?? current.virtualFolderId ?? "",
+      sourceEnabled: updates.sourceEnabled ?? current.sourceEnabled ?? true,
       favorite: updates.favorite ?? Boolean(current.favorite)
     };
     await FXBrowserSettings.setLibraryOrganization(organization);

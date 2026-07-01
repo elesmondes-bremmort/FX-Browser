@@ -1,4 +1,4 @@
-import { DEFAULT_LIBRARY_ORGANIZATION, DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
+import { DEFAULT_LIBRARY_ORGANIZATION, DEFAULT_ORIGIN_VAULT_SOURCES, DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
 import { parseDirectoryList } from "./utils.js";
 
 export class FXBrowserSettings {
@@ -46,6 +46,22 @@ export class FXBrowserSettings {
       type: Object,
       default: DEFAULT_LIBRARY_ORGANIZATION
     });
+
+    game.settings.register(MODULE_ID, SETTINGS.ORIGIN_VAULT_SOURCES, {
+      scope: "world",
+      config: false,
+      type: Object,
+      default: DEFAULT_ORIGIN_VAULT_SOURCES
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.INCLUDE_JB2A_SOURCES, {
+      name: "FX Browser: scanner JB2A directement",
+      hint: "Optionnel. Origin Vault reste la source principale.",
+      scope: "world",
+      config: true,
+      type: Boolean,
+      default: false
+    });
   }
 
   static getCustomDirectories() {
@@ -87,5 +103,18 @@ export class FXBrowserSettings {
       folders: Array.isArray(organization.folders) ? organization.folders : [],
       assets: organization.assets && typeof organization.assets === "object" ? organization.assets : {}
     });
+  }
+
+  static getOriginVaultSources() {
+    const sources = game.settings.get(MODULE_ID, SETTINGS.ORIGIN_VAULT_SOURCES);
+    return Array.isArray(sources) ? sources : [];
+  }
+
+  static async setOriginVaultSources(sources) {
+    await game.settings.set(MODULE_ID, SETTINGS.ORIGIN_VAULT_SOURCES, Array.isArray(sources) ? sources : []);
+  }
+
+  static includeJb2aSources() {
+    return Boolean(game.settings.get(MODULE_ID, SETTINGS.INCLUDE_JB2A_SOURCES));
   }
 }
