@@ -2,7 +2,7 @@
 
 ## 0.0.7
 
-- Integrate the GM-only FX Browser button into the right-side custom control group and switch it to a flame icon.
+- Move the GM-only FX Browser launcher back into Foundry's native left Scene Controls with a flame icon.
 - Increase fixed asset card dimensions so large libraries remain scrollable and readable without eager-loading videos.
 
 ## 0.0.6

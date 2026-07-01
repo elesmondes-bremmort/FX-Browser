@@ -8,46 +8,6 @@
   background: #191614;
 }
 
-.fx-browser-right-control {
-  display: inline-grid;
-  place-items: center;
-}
-
-.fx-browser-right-control i {
-  pointer-events: none;
-}
-
-.fx-browser-fallback-control {
-  position: fixed;
-  top: 116px;
-  right: 18px;
-  z-index: 70;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  color: #f8e6ad;
-  background:
-    radial-gradient(circle at 35% 28%, rgb(255 226 142 / 22%), transparent 34%),
-    linear-gradient(145deg, #3a2c19, #151210);
-  border: 1px solid #b68a3a;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(255 224 151 / 12%);
-  cursor: pointer;
-}
-
-.fx-browser-fallback-control:hover,
-.fx-browser-fallback-control.active {
-  color: #1a1309;
-  background: linear-gradient(145deg, #f1cf78, #9b6d29);
-  border-color: #f6d98b;
-}
-
-.fx-browser-fallback-control i {
-  font-size: 18px;
-}
-
 .fx-browser-placement label {
   min-width: 0;
   display: flex;

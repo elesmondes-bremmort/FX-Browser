@@ -15,7 +15,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     classes: ["fx-browser-window"],
     window: {
       title: "FX Browser",
-      icon: "fa-solid fa-wand-magic-sparkles",
+      icon: "fa-solid fa-fire",
       resizable: true
     },
     position: DEFAULT_WINDOW_STATE,
@@ -127,9 +127,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.dragDrop.unbindCanvasDrop();
     await this.#saveWindowState();
     FXBrowserApp.instance = null;
-    const result = await super.close(options);
-    Hooks.callAll("fxBrowserWindowToggled", false);
-    return result;
+    return super.close(options);
   }
 
   setPosition(position = {}) {
@@ -202,14 +200,12 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       if (FXBrowserApp.instance?.rendered) {
         await FXBrowserApp.instance.close();
         debugLog("window closed");
-        Hooks.callAll("fxBrowserWindowToggled", false);
         return;
       }
 
       FXBrowserApp.instance = FXBrowserApp.instance ?? new FXBrowserApp();
       await FXBrowserApp.instance.render({ force: true });
       debugLog("window opened");
-      Hooks.callAll("fxBrowserWindowToggled", true);
     } catch (error) {
       console.error("FX Browser | Failed to toggle browser window", error);
       notify(game.i18n.localize("fx-browser.errors.windowToggle"), "error");
