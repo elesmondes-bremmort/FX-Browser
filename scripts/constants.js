@@ -2,7 +2,6 @@ export const MODULE_ID = "fx-browser";
 export const MODULE_TITLE = "FX Browser";
 export const CANVAS_CONTROL_ID = "fx-browser-control";
 export const CANVAS_TOOL_ID = "fx-browser-open-browser";
-export const CANVAS_EDIT_TOOL_ID = "fx-browser-overlay-edit";
 
 export const SETTINGS = {
   CUSTOM_DIRECTORIES: "customDirectories",
@@ -16,9 +15,7 @@ export const SETTINGS = {
 };
 
 export const FLAGS = {
-  SCOPE: MODULE_ID,
-  IS_OVERLAY: "isOverlay",
-  DATA: "overlayData"
+  SCOPE: MODULE_ID
 };
 
 export const DEFAULT_WINDOW_STATE = {

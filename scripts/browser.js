@@ -3,7 +3,6 @@ import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
 import { FXLibraryManager } from "./libraryManager.js";
 import { FXOriginVaultSources } from "./originVaultSources.js";
-import { FXOverlayControls } from "./overlayControls.js";
 import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
 import { FXBrowserSettings } from "./settings.js";
@@ -44,7 +43,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.contextMenu = null;
     this.formState = null;
     this.preview = null;
-    this.selectedOverlayId = null;
     this.searchDebounce = null;
     this.dragDrop = new FXDragDrop((id) => this.library.assets.find((asset) => asset.id === id));
     this.dragDrop.bindCanvasDrop();
@@ -53,9 +51,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   async _prepareContext() {
     this.#refreshLibrary();
     this.#filterAssets();
-    const overlays = FXOverlayManager.getOverlays();
-    const selectedOverlay = overlays.find((overlay) => overlay.id === this.selectedOverlayId) ?? overlays[0] ?? null;
-    this.selectedOverlayId = selectedOverlay?.id ?? null;
 
     return {
       tabs: this.#getTabContext(),
@@ -65,8 +60,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       contextMenu: this.#getContextMenuContext(),
       formState: this.formState,
       assets: this.filteredAssets,
-      overlays,
-      selectedOverlay,
       selectedAsset: this.#getSelectedAssetContext(),
       folders: this.library.folders,
       placement: FXBrowserSettings.getPlacement(),
@@ -83,10 +76,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview.render(this.selectedAsset);
     this.preview.activateListeners();
 
-    new FXOverlayControls(root, (id) => {
-      this.selectedOverlayId = id;
-      this.render({ force: true });
-    }, () => this.#confirmDeleteAllOverlays()).activate(this.selectedOverlayId);
+    root.querySelector("[data-overlay-delete-all]")?.addEventListener("click", () => this.#confirmDeleteAllOverlays());
 
     root.addEventListener("click", (event) => {
       if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
@@ -267,11 +257,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       alpha: clampNumber(get("alpha")?.value, 0, 1, 1),
       rotation: clampNumber(get("rotation")?.value, -360, 360, 0),
       loop: Boolean(get("loop")?.checked),
-      elevation: clampNumber(get("elevation")?.value, -9999, 9999, 0),
-      name: get("name")?.value ?? "",
-      visible: Boolean(get("visible")?.checked),
-      locked: Boolean(get("locked")?.checked),
-      zIndex: clampNumber(get("zIndex")?.value, -9999, 9999, 0)
+      name: get("name")?.value ?? ""
     });
   }
 
@@ -293,10 +279,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   static async #onRescan() {
     await this.#rescanLibrary();
-  }
-
-  refreshOverlays() {
-    this.render({ force: true });
   }
 
   #refreshLibrary() {
@@ -450,14 +432,12 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   async #confirmDeleteAllOverlays() {
     const confirmed = await this.#confirmDialog({
       title: "Supprimer tous les FX",
-      content: "<p>Supprimer tous les FX Overlay de cette scène ?</p>",
+      content: "<p>Supprimer tous les FX de cette scene ?</p>",
       yes: "Supprimer",
       no: "Annuler"
     });
     if (!confirmed) return;
     await FXOverlayManager.deleteAllOverlays();
-    this.selectedOverlayId = null;
-    this.render({ force: true });
   }
 
   async #confirmDialog({ title, content, yes, no }) {

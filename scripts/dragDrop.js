@@ -87,10 +87,8 @@ export class FXDragDrop {
     this.lastDropKey = dropKey;
     this.activeDropKeys.add(dropKey);
     const asset = this.getAssetById(payload.id) ?? payload;
-    const soundIdsBeforeDrop = this.#getAmbientSoundIds();
     try {
       await FXOverlayManager.createFromAsset(asset, event);
-      this.#logUnexpectedAmbientSounds(soundIdsBeforeDrop);
       debugLog("drop complete");
       return false;
     } finally {
@@ -124,29 +122,6 @@ export class FXDragDrop {
 
   #hasOverlayPayload(event) {
     return Array.from(event.dataTransfer?.types ?? []).includes(MIME_TYPE);
-  }
-
-  #getAmbientSoundIds() {
-    return new Set(this.#getAmbientSounds().map((sound) => sound.id));
-  }
-
-  #logUnexpectedAmbientSounds(previousIds) {
-    window.setTimeout(() => {
-      const created = this.#getAmbientSounds().filter((sound) => !previousIds.has(sound.id));
-      if (!created.length) {
-        debugLog("native audio guard: no AmbientSound created");
-        return;
-      }
-
-      console.warn("FX Browser | Native audio guard detected unexpected AmbientSound creation after FX drop", created);
-    }, 100);
-  }
-
-  #getAmbientSounds() {
-    const sounds = canvas?.scene?.sounds;
-    if (!sounds) return [];
-    if (typeof sounds.values === "function") return Array.from(sounds.values());
-    return Array.from(sounds);
   }
 
   #getCanvasDropTargets() {

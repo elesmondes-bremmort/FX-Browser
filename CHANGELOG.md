@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.17
+
+- Revert scene FX handling to plain native Foundry Tile documents with `fx-browser` flags only.
+- Remove the custom FX Overlay edit layer, selection frame, canvas pointer listeners, and Pixi interactivity overrides.
+- Simplify FX drops to create one native Tile at `sort = 1` and `elevation = 1`, with scene-wide FX deletion kept behind a confirmation dialog.
+
 ## 0.0.16
 
 - Restore native Foundry Tiles/select interaction for FX Browser overlays while keeping pass-through behavior in other controls.
