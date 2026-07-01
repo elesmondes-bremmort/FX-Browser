@@ -99,6 +99,40 @@
       {{/if}}
 
       {{> "modules/fx-browser/templates/overlay-list.hbs"}}
+
+      <section class="fx-browser-light-panel">
+        <h2>Compensation lumineuse</h2>
+        <label class="fx-browser-light-toggle">
+          <input data-light-preset name="lightEnabled" type="checkbox" {{#if lightPreset.enabled}}checked{{/if}}>
+          <span>Compensation lumineuse</span>
+        </label>
+        <div class="fx-browser-light-grid">
+          <label>
+            <span>Niveau de lumiere</span>
+            <select data-light-preset name="lightLevel">
+              {{#each lightPreset.levels}}
+                <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+          </label>
+          <label>
+            <span>Intensite</span>
+            <input data-light-preset name="lightIntensity" type="number" min="0" max="1" step="0.05" value="{{lightPreset.intensity}}">
+          </label>
+          <label>
+            <span>Rayon</span>
+            <input data-light-preset name="lightRadius" type="number" min="0" max="20" step="0.25" value="{{lightPreset.radius}}">
+          </label>
+          <label>
+            <span>Couleur</span>
+            <input data-light-preset name="lightColor" type="color" value="{{lightPreset.color}}">
+          </label>
+        </div>
+        <div class="fx-browser-light-actions">
+          <button type="button" data-light-reset>Reinitialiser le preset lumiere</button>
+          <button type="button" data-light-sync>Synchroniser les lumieres FX</button>
+        </div>
+      </section>
     </aside>
   </div>
 

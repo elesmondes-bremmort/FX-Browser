@@ -1,5 +1,6 @@
 import { DEFAULT_PLACEMENT, FLAGS, MISSING_ASSET_MESSAGE } from "./constants.js";
 import { FXBrowserSettings } from "./settings.js";
+import { LightCompensationManager } from "./lightCompensationManager.js";
 import { canUseCanvas, getGridSize, notify } from "./utils.js";
 
 export class FXOverlayManager {
@@ -23,7 +24,13 @@ export class FXOverlayManager {
 
     try {
       const created = await canvas.scene.createEmbeddedDocuments("Tile", [this.#toTileData(asset, dropEvent)], { fxBrowserDrop: true });
-      return created?.[0] ?? null;
+      const tile = created?.[0] ?? null;
+      if (tile) {
+        LightCompensationManager.createLinkedLight(tile).catch((error) => {
+          console.error("FX Browser | Failed to create linked FX light", error);
+        });
+      }
+      return tile;
     } catch (error) {
       console.error("FX Browser | Failed to create FX tile", error);
       notify(game.i18n.localize("fx-browser.errors.overlayCreate"), "error");
@@ -38,8 +45,8 @@ export class FXOverlayManager {
     const ids = scene.tiles
       .filter((tile) => this.isOverlayDocument(tile))
       .map((tile) => tile.id);
-    if (!ids.length) return;
-    await scene.deleteEmbeddedDocuments("Tile", ids);
+    await LightCompensationManager.deleteGeneratedLights(scene);
+    if (ids.length) await scene.deleteEmbeddedDocuments("Tile", ids, { fxBrowserDeleteAll: true });
   }
 
   static isOverlayDocument(tile) {

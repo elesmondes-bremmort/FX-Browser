@@ -7,6 +7,7 @@ export const SETTINGS = {
   CUSTOM_DIRECTORIES: "customDirectories",
   WINDOW_STATE: "windowState",
   PLACEMENT: "placementSettings",
+  LIGHT_COMPENSATION: "lightCompensationPreset",
   ASSET_CACHE: "assetCache",
   LAST_SCAN: "lastScan",
   LIBRARY_ORGANIZATION: "libraryOrganization",
@@ -36,6 +37,14 @@ export const DEFAULT_PLACEMENT = {
   elevation: 10,
   zIndex: 10,
   name: ""
+};
+
+export const DEFAULT_LIGHT_COMPENSATION = {
+  enabled: false,
+  level: 0.25,
+  intensity: 0.25,
+  radius: 1,
+  color: "#ffdca8"
 };
 
 export const JB2A_DIRECTORIES = [

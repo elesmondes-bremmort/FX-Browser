@@ -1,4 +1,4 @@
-import { DEFAULT_LIBRARY_ORGANIZATION, DEFAULT_ORIGIN_VAULT_SOURCES, DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
+import { DEFAULT_LIBRARY_ORGANIZATION, DEFAULT_LIGHT_COMPENSATION, DEFAULT_ORIGIN_VAULT_SOURCES, DEFAULT_PLACEMENT, DEFAULT_WINDOW_STATE, MODULE_ID, SETTINGS } from "./constants.js";
 import { parseDirectoryList } from "./utils.js";
 
 export class FXBrowserSettings {
@@ -24,6 +24,13 @@ export class FXBrowserSettings {
       config: false,
       type: Object,
       default: DEFAULT_PLACEMENT
+    });
+
+    game.settings.register(MODULE_ID, SETTINGS.LIGHT_COMPENSATION, {
+      scope: "world",
+      config: false,
+      type: Object,
+      default: DEFAULT_LIGHT_COMPENSATION
     });
 
     game.settings.register(MODULE_ID, SETTINGS.ASSET_CACHE, {
@@ -88,6 +95,21 @@ export class FXBrowserSettings {
       ...this.getPlacement(),
       ...settings
     });
+  }
+
+  static getLightCompensation() {
+    return { ...DEFAULT_LIGHT_COMPENSATION, ...(game.settings.get(MODULE_ID, SETTINGS.LIGHT_COMPENSATION) ?? {}) };
+  }
+
+  static async setLightCompensation(settings) {
+    await game.settings.set(MODULE_ID, SETTINGS.LIGHT_COMPENSATION, {
+      ...this.getLightCompensation(),
+      ...settings
+    });
+  }
+
+  static async resetLightCompensation() {
+    await game.settings.set(MODULE_ID, SETTINGS.LIGHT_COMPENSATION, { ...DEFAULT_LIGHT_COMPENSATION });
   }
 
   static getLibraryOrganization() {

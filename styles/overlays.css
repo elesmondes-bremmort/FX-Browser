@@ -27,3 +27,63 @@
   border-radius: 5px;
   font-size: 11px;
 }
+
+.fx-browser-light-panel {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(215 180 95 / 18%);
+}
+
+.fx-browser-light-panel h2 {
+  margin: 0 0 8px;
+  color: #f4d78b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fx-browser-light-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--fx-muted);
+  font-size: 11px;
+}
+
+.fx-browser-light-toggle {
+  min-height: 28px;
+  flex-direction: row !important;
+  align-items: center;
+  color: var(--fx-text) !important;
+}
+
+.fx-browser-light-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fx-browser-light-grid input,
+.fx-browser-light-grid select {
+  width: 100%;
+  height: 28px;
+  color: var(--fx-text);
+  background: #0f0e0d;
+  border: 1px solid #4b3b23;
+  border-radius: 5px;
+}
+
+.fx-browser-light-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.fx-browser-light-actions button {
+  min-height: 28px;
+  color: var(--fx-text);
+  background: var(--fx-panel-soft);
+  border: 1px solid #5c4726;
+  border-radius: 5px;
+  font-size: 11px;
+}

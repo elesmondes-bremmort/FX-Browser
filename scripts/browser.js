@@ -5,6 +5,7 @@ import { FXLibraryManager } from "./libraryManager.js";
 import { FXOriginVaultSources } from "./originVaultSources.js";
 import { FXOverlayManager } from "./overlayManager.js";
 import { FXPreview } from "./preview.js";
+import { LightCompensationManager } from "./lightCompensationManager.js";
 import { FXBrowserSettings } from "./settings.js";
 import { clampNumber, debugLog, localize, notify } from "./utils.js";
 
@@ -63,6 +64,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       selectedAsset: this.#getSelectedAssetContext(),
       folders: this.library.folders,
       placement: FXBrowserSettings.getPlacement(),
+      lightPreset: this.#getLightPresetContext(),
       emptyMessage: this.#getEmptyMessage(),
       hasAssets: this.filteredAssets.length > 0,
       query: this.query
@@ -77,6 +79,11 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview.activateListeners();
 
     root.querySelector("[data-overlay-delete-all]")?.addEventListener("click", () => this.#confirmDeleteAllOverlays());
+    root.querySelector("[data-light-reset]")?.addEventListener("click", async () => {
+      await FXBrowserSettings.resetLightCompensation();
+      this.render({ force: true });
+    });
+    root.querySelector("[data-light-sync]")?.addEventListener("click", () => LightCompensationManager.syncAll());
 
     root.addEventListener("click", (event) => {
       if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
@@ -179,6 +186,11 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       input.addEventListener("change", () => this.#savePlacement(root));
       input.addEventListener("input", () => this.#savePlacement(root));
     });
+
+    root.querySelectorAll("[data-light-preset]").forEach((input) => {
+      input.addEventListener("change", () => this.#saveLightPreset(root));
+      input.addEventListener("input", () => this.#saveLightPreset(root));
+    });
   }
 
   #activateHoverPreview(card) {
@@ -258,6 +270,17 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       rotation: clampNumber(get("rotation")?.value, -360, 360, 0),
       loop: Boolean(get("loop")?.checked),
       name: get("name")?.value ?? ""
+    });
+  }
+
+  async #saveLightPreset(root) {
+    const get = (name) => root.querySelector(`[name="${name}"]`);
+    await FXBrowserSettings.setLightCompensation({
+      enabled: Boolean(get("lightEnabled")?.checked),
+      level: clampNumber(get("lightLevel")?.value, 0, 1, 0.25),
+      intensity: clampNumber(get("lightIntensity")?.value, 0, 1, 0.25),
+      radius: clampNumber(get("lightRadius")?.value, 0, 20, 1),
+      color: get("lightColor")?.value || "#ffdca8"
     });
   }
 
@@ -341,6 +364,18 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       favoriteLabel: asset.favorite ? "Oui" : "Non",
       folderNames: this.library.folders.filter((folder) => folder.id === asset.virtualFolderId).map((folder) => folder.name).join(", ") || "Aucun"
     };
+  }
+
+  #getLightPresetContext() {
+    const preset = FXBrowserSettings.getLightCompensation();
+    const levels = [
+      { value: "0.1", label: "Tres faible", selected: Number(preset.level) === 0.1 },
+      { value: "0.25", label: "Faible", selected: Number(preset.level) === 0.25 },
+      { value: "0.5", label: "Moyen", selected: Number(preset.level) === 0.5 },
+      { value: "0.75", label: "Fort", selected: Number(preset.level) === 0.75 },
+      { value: "1", label: "Tres fort", selected: Number(preset.level) === 1 }
+    ];
+    return { ...preset, levels };
   }
 
   #openContextMenu(event, asset) {

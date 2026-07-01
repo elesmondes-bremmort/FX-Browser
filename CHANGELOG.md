@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.18
+
+- Add optional experimental AmbientLight compensation for newly dropped native FX Tiles.
+- Store a global light compensation preset with enablement, level, intensity, radius, color, reset, and manual sync controls.
+- Link generated lights to FX Tiles so they follow movement and are removed with their Tile or by the scene-wide FX cleanup.
+
 ## 0.0.17
 
 - Revert scene FX handling to plain native Foundry Tile documents with `fx-browser` flags only.
