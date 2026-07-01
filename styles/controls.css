@@ -9,6 +9,15 @@
 }
 
 .fx-browser-right-control {
+  display: inline-grid;
+  place-items: center;
+}
+
+.fx-browser-right-control i {
+  pointer-events: none;
+}
+
+.fx-browser-fallback-control {
   position: fixed;
   top: 116px;
   right: 18px;
@@ -28,15 +37,14 @@
   cursor: pointer;
 }
 
-.fx-browser-right-control:hover,
-.fx-browser-right-control.active {
+.fx-browser-fallback-control:hover,
+.fx-browser-fallback-control.active {
   color: #1a1309;
   background: linear-gradient(145deg, #f1cf78, #9b6d29);
   border-color: #f6d98b;
 }
 
-.fx-browser-right-control i {
-  pointer-events: none;
+.fx-browser-fallback-control i {
   font-size: 18px;
 }
 

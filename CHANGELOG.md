@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.7
+
+- Integrate the GM-only FX Browser button into the right-side custom control group and switch it to a flame icon.
+- Increase fixed asset card dimensions so large libraries remain scrollable and readable without eager-loading videos.
+
 ## 0.0.6
 
 - Move FX Browser to a GM-only right-side custom control button with matching dark/gold round styling.

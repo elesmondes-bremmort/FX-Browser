@@ -59,6 +59,8 @@ function ensureRightControlButton() {
   const existing = document.getElementById(RIGHT_CONTROL_ID);
   if (existing) {
     if (existing.parentElement !== host) host.append(existing);
+    applyMatchingControlStyle(existing, host);
+    updateRightControlState();
     return;
   }
 
@@ -69,7 +71,8 @@ function ensureRightControlButton() {
   button.dataset.tool = CANVAS_TOOL_ID;
   button.title = "FX Browser";
   button.setAttribute("aria-label", "FX Browser");
-  button.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
+  button.innerHTML = '<i class="fa-solid fa-fire-flame-curved"></i>';
+  applyMatchingControlStyle(button, host);
   button.addEventListener("click", async (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -84,20 +87,39 @@ function ensureRightControlButton() {
 }
 
 function findRightControlHost() {
+  const rightDock = document.querySelector("#ui-right");
   const selectors = [
     "#ui-right .fx-browser-custom-controls",
     "#ui-right .custom-controls",
+    "#ui-right [data-custom-controls]",
     "#ui-right .control-tools",
-    "#ui-right",
-    "body"
+    "#ui-right nav",
+    "#ui-right menu"
   ];
-  return selectors.map((selector) => document.querySelector(selector)).find(Boolean);
+
+  const explicitHost = selectors.map((selector) => document.querySelector(selector)).find((element) => element?.querySelector?.("button, a"));
+  if (explicitHost) return explicitHost;
+
+  const buttonGroup = Array.from(rightDock?.querySelectorAll?.("div, nav, menu, section") ?? [])
+    .find((element) => element.querySelectorAll(":scope > button, :scope > a").length >= 2);
+  return buttonGroup ?? rightDock ?? document.body;
 }
 
 function updateRightControlState() {
   const button = document.getElementById(RIGHT_CONTROL_ID);
   if (!button) return;
   button.classList.toggle("active", Boolean(FXBrowserApp.instance?.rendered));
+}
+
+function applyMatchingControlStyle(button, host) {
+  const source = Array.from(host.querySelectorAll("button, a")).find((element) => element.id !== RIGHT_CONTROL_ID);
+  if (source?.className) {
+    button.className = source.className;
+    button.classList.add("fx-browser-right-control");
+    return;
+  }
+
+  button.classList.add("fx-browser-right-control", "fx-browser-fallback-control");
 }
 
 Hooks.once("devModeReady", ({ registerPackageDebugFlag }) => {
