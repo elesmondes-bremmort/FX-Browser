@@ -1,4 +1,3 @@
-import { CATEGORIES } from "./categories.js";
 import { DEFAULT_WINDOW_STATE } from "./constants.js";
 import { FXAssetScanner } from "./assetScanner.js";
 import { FXDragDrop } from "./dragDrop.js";
@@ -22,8 +21,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     },
     position: DEFAULT_WINDOW_STATE,
     actions: {
-      rescan: FXBrowserApp.#onRescan,
-      selectCategory: FXBrowserApp.#onSelectCategory
+      rescan: FXBrowserApp.#onRescan
     }
   };
 
@@ -37,13 +35,14 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     super({ ...options, position: FXBrowserSettings.getWindowState() });
     this.assets = FXAssetScanner.getCachedAssets();
     this.library = FXLibraryManager.buildLibrary(this.assets);
-    this.filteredAssets = this.assets;
-    this.selectedAsset = this.assets[0] ?? null;
-    this.category = "all";
-    this.sourceFilter = "all";
+    this.filteredAssets = this.library.assets;
+    this.selectedAsset = this.library.assets.find((asset) => !asset.missing) ?? null;
     this.folderFilter = "";
     this.specialFilter = "all";
     this.query = "";
+    this.showSources = false;
+    this.contextMenu = null;
+    this.formState = null;
     this.preview = null;
     this.selectedOverlayId = null;
     this.searchDebounce = null;
@@ -59,20 +58,17 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.selectedOverlayId = selectedOverlay?.id ?? null;
 
     return {
-      categories: CATEGORIES.map((category) => ({ ...category, active: category.id === this.category })),
-      sources: this.library.sources.map((source) => ({ ...source, active: this.sourceFilter === source.id })),
+      tabs: this.#getTabContext(),
       configuredSources: this.#getConfiguredSourceContext(),
       originVaultAvailable: FXOriginVaultSources.isAvailable(),
-      folders: this.library.folders.map((folder) => ({ ...folder, active: this.folderFilter === folder.id })),
-      librarySections: {
-        all: this.specialFilter === "all",
-        favorites: this.specialFilter === "favorites",
-        personal: this.specialFilter === "personal"
-      },
+      showSources: this.showSources,
+      contextMenu: this.#getContextMenuContext(),
+      formState: this.formState,
       assets: this.filteredAssets,
       overlays,
       selectedOverlay,
-      selectedAsset: this.selectedAsset,
+      selectedAsset: this.#getSelectedAssetContext(),
+      folders: this.library.folders,
       placement: FXBrowserSettings.getPlacement(),
       emptyMessage: this.#getEmptyMessage(),
       hasAssets: this.filteredAssets.length > 0,
@@ -86,10 +82,15 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview = new FXPreview(root);
     this.preview.render(this.selectedAsset);
     this.preview.activateListeners();
+
     new FXOverlayControls(root, (id) => {
       this.selectedOverlayId = id;
       this.render({ force: true });
     }).activate(this.selectedOverlayId);
+
+    root.addEventListener("click", (event) => {
+      if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
+    });
 
     root.querySelector("[data-search]")?.addEventListener("input", (event) => {
       this.query = event.currentTarget.value;
@@ -97,38 +98,11 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       this.searchDebounce = window.setTimeout(() => this.#renderAssetList(), 125);
     });
 
-    root.querySelectorAll("[data-source-filter]").forEach((button) => {
-      button.addEventListener("click", () => {
-        this.sourceFilter = button.dataset.sourceFilter;
-        this.specialFilter = "all";
-        this.folderFilter = "";
-        this.render({ force: true });
-      });
-    });
-
-    root.querySelector("[data-source-add]")?.addEventListener("click", () => this.#addOriginVaultSource());
-    root.querySelector("[data-source-rescan]")?.addEventListener("click", () => this.#rescanLibrary());
-    root.querySelectorAll("[data-source-toggle]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        await FXOriginVaultSources.toggleSource(button.dataset.sourceToggle);
-        this.assets = await FXAssetScanner.scan({ notifyResult: false });
-        this.render({ force: true });
-      });
-    });
-    root.querySelectorAll("[data-source-remove]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        await FXOriginVaultSources.removeSource(button.dataset.sourceRemove);
-        this.assets = await FXAssetScanner.scan({ notifyResult: false });
-        this.sourceFilter = "all";
-        this.render({ force: true });
-      });
-    });
-
     root.querySelectorAll("[data-special-filter]").forEach((button) => {
       button.addEventListener("click", () => {
         this.specialFilter = button.dataset.specialFilter;
-        this.sourceFilter = "all";
         this.folderFilter = "";
+        this.#closeContextMenu();
         this.render({ force: true });
       });
     });
@@ -137,12 +111,77 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       button.addEventListener("click", () => {
         this.folderFilter = button.dataset.folderFilter;
         this.specialFilter = "folder";
-        this.sourceFilter = "all";
+        this.#closeContextMenu();
         this.render({ force: true });
       });
     });
 
-    root.querySelector("[data-folder-list]")?.addEventListener("contextmenu", (event) => this.#onFolderContextMenu(event));
+    root.querySelector("[data-folder-create]")?.addEventListener("click", () => {
+      this.formState = { type: "folder-create", title: "Nouvel onglet", name: "", isNameForm: true };
+      this.render({ force: true });
+    });
+
+    root.querySelectorAll("[data-folder-rename]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const folder = this.library.folders.find((item) => item.id === button.dataset.folderRename);
+        if (!folder) return;
+        this.formState = { type: "folder-rename", title: "Renommer l'onglet", folderId: folder.id, name: folder.name, isNameForm: true };
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelectorAll("[data-folder-delete]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await FXLibraryManager.deleteFolder(button.dataset.folderDelete);
+        if (this.folderFilter === button.dataset.folderDelete) {
+          this.folderFilter = "";
+          this.specialFilter = "all";
+        }
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelector("[data-source-panel-toggle]")?.addEventListener("click", () => {
+      this.showSources = !this.showSources;
+      this.render({ force: true });
+    });
+
+    root.querySelector("[data-source-add]")?.addEventListener("click", () => {
+      this.formState = { type: "source", title: "Ajouter une source Origin Vault", name: "", path: "", isSource: true };
+      this.render({ force: true });
+    });
+
+    root.querySelector("[data-source-rescan]")?.addEventListener("click", () => this.#rescanLibrary());
+
+    root.querySelectorAll("[data-source-toggle]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        await FXOriginVaultSources.toggleSource(input.dataset.sourceToggle);
+        this.assets = await FXAssetScanner.scan({ notifyResult: false });
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelectorAll("[data-source-remove]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await FXOriginVaultSources.removeSource(button.dataset.sourceRemove);
+        this.assets = await FXAssetScanner.scan({ notifyResult: false });
+        this.render({ force: true });
+      });
+    });
+
+    root.querySelectorAll("[data-context-action]").forEach((button) => {
+      button.addEventListener("click", (event) => this.#onContextAction(event, button.dataset.contextAction, button.dataset.folderId));
+    });
+
+    root.querySelectorAll("[data-asset-action]").forEach((button) => {
+      button.addEventListener("click", (event) => this.#onAssetAction(event, button.dataset.assetAction));
+    });
+
+    root.querySelector("[data-fx-form]")?.addEventListener("submit", (event) => this.#onInternalFormSubmit(event));
+    root.querySelector("[data-form-cancel]")?.addEventListener("click", () => {
+      this.formState = null;
+      this.render({ force: true });
+    });
 
     this.#activateAssetCards();
 
@@ -190,9 +229,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       card.addEventListener("click", () => {
         if (asset.missing) return;
         this.selectedAsset = asset;
-        this.preview?.render(asset);
+        this.#closeContextMenu();
+        this.render({ force: true });
       });
-      card.addEventListener("contextmenu", (event) => this.#onAssetContextMenu(event, asset));
+      card.addEventListener("contextmenu", (event) => this.#openContextMenu(event, asset));
     });
   }
 
@@ -239,18 +279,15 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.#refreshLibrary();
     const query = this.query.trim().toLowerCase();
     this.filteredAssets = this.library.assets.filter((asset) => {
-      const matchesCategory = this.category === "all" || asset.category === this.category;
-      const matchesSource = this.sourceFilter === "all" || asset.sourceId === this.sourceFilter;
       const matchesSpecial = this.specialFilter !== "favorites" || asset.favorite;
-      const matchesPersonal = this.specialFilter !== "personal" || Boolean(asset.virtualFolderId);
       const matchesFolder = this.specialFilter !== "folder" || asset.virtualFolderId === this.folderFilter;
       const haystack = `${asset.originalName ?? ""} ${asset.displayName ?? ""} ${asset.name} ${asset.path} ${asset.categoryLabel} ${asset.sourceName}`.toLowerCase();
       const matchesQuery = !query || haystack.includes(query);
-      return matchesCategory && matchesSource && matchesSpecial && matchesPersonal && matchesFolder && matchesQuery;
+      return matchesSpecial && matchesFolder && matchesQuery;
     });
 
     if (this.selectedAsset && !this.filteredAssets.some((asset) => asset.id === this.selectedAsset.id)) {
-      this.selectedAsset = this.filteredAssets[0] ?? null;
+      this.selectedAsset = this.filteredAssets.find((asset) => !asset.missing) ?? null;
     }
   }
 
@@ -262,13 +299,10 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.render({ force: true });
   }
 
-  static async #onSelectCategory(event, target) {
-    this.category = target.dataset.category;
-    this.render({ force: true });
-  }
-
   #refreshLibrary() {
+    const selectedId = this.selectedAsset?.id;
     this.library = FXLibraryManager.buildLibrary(this.assets);
+    if (selectedId) this.selectedAsset = this.library.assets.find((asset) => asset.id === selectedId) ?? this.selectedAsset;
   }
 
   async #rescanLibrary() {
@@ -278,31 +312,20 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.render({ force: true });
   }
 
+  #getTabContext() {
+    return {
+      all: this.specialFilter === "all",
+      favorites: this.specialFilter === "favorites",
+      folders: this.library.folders.map((folder) => ({ ...folder, active: this.specialFilter === "folder" && this.folderFilter === folder.id }))
+    };
+  }
+
   #getConfiguredSourceContext() {
     const counts = new Map(this.library.sources.map((source) => [source.id, source.count]));
     return FXOriginVaultSources.getSources().map((source) => ({
       ...source,
-      count: counts.get(source.id) ?? 0,
-      active: this.sourceFilter === source.id
+      count: counts.get(source.id) ?? 0
     }));
-  }
-
-  async #addOriginVaultSource() {
-    const discovered = FXOriginVaultSources.discoverRepositories();
-    const options = discovered.map((source, index) => `${index + 1}. ${source.name} (${source.path})`).join("\n");
-    const choice = options ? window.prompt(`Repository Origin Vault à ajouter, ou chemin manuel:\n${options}`, "1") : window.prompt("Chemin du repository / dossier Origin Vault", "");
-    if (!choice) return;
-
-    const selected = discovered[Number(choice) - 1];
-    if (selected) {
-      await FXOriginVaultSources.addSource({ ...selected, enabled: true });
-    } else {
-      const name = window.prompt("Nom de la source Origin Vault", "Origin Vault");
-      await FXOriginVaultSources.addSource({ name: name || "Origin Vault", path: choice, enabled: true });
-    }
-
-    this.assets = await FXAssetScanner.scan({ notifyResult: false });
-    this.render({ force: true });
   }
 
   async #renderAssetList() {
@@ -322,55 +345,106 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
   #getEmptyMessage() {
     const hasSources = FXOriginVaultSources.getSources().length > 0;
     const hasIndexedAssets = this.library.assets.some((asset) => !asset.missing);
-    if (this.query.trim() && hasIndexedAssets) return "Aucun effet trouvé pour cette recherche.";
-    if (hasSources && !hasIndexedAssets) return "Source détectée, aucun FX indexé. Cliquez sur Rescanner.";
-    if (!hasSources) return "Aucune bibliothèque d'effets détectée.";
-    return "Aucune bibliothèque d'effets scannée.";
+    if (this.query.trim() && hasIndexedAssets) return "Aucun effet trouve pour cette recherche.";
+    if (hasSources && !hasIndexedAssets) return "Source detectee, aucun FX indexe. Cliquez sur Rescanner.";
+    if (!hasSources) return "Aucune bibliotheque d'effets detectee.";
+    return "Aucune bibliotheque d'effets scannee.";
   }
 
-  async #onAssetContextMenu(event, asset) {
+  #getSelectedAssetContext() {
+    const asset = this.selectedAsset;
+    if (!asset) return null;
+    return {
+      ...asset,
+      favoriteLabel: asset.favorite ? "Oui" : "Non",
+      folderNames: this.library.folders.filter((folder) => folder.id === asset.virtualFolderId).map((folder) => folder.name).join(", ") || "Aucun"
+    };
+  }
+
+  #openContextMenu(event, asset) {
     event.preventDefault();
     event.stopPropagation();
-    const action = window.prompt("Action: rename, favorite, move", asset.favorite ? "favorite" : "rename");
-    if (!action) return;
+    const rect = this.element.getBoundingClientRect();
+    this.contextMenu = {
+      assetId: asset.id,
+      x: Math.max(8, event.clientX - rect.left),
+      y: Math.max(8, event.clientY - rect.top)
+    };
+    if (!asset.missing) this.selectedAsset = asset;
+    this.render({ force: true });
+  }
 
+  #closeContextMenu() {
+    this.contextMenu = null;
+    this.element?.querySelector(".fx-browser-context-menu")?.remove();
+  }
+
+  #getContextMenuContext() {
+    if (!this.contextMenu) return null;
+    const asset = this.library.assets.find((item) => item.id === this.contextMenu.assetId);
+    if (!asset) return null;
+    return {
+      ...this.contextMenu,
+      asset,
+      isFavorite: asset.favorite,
+      hasCurrentFolder: Boolean(asset.virtualFolderId),
+      folders: this.library.folders.map((folder) => ({ ...folder, selected: asset.virtualFolderId === folder.id }))
+    };
+  }
+
+  async #onContextAction(event, action, folderId = "") {
+    event.preventDefault();
+    event.stopPropagation();
+    const asset = this.library.assets.find((item) => item.id === this.contextMenu?.assetId);
+    if (!asset) return;
+    await this.#runAssetAction(asset, action, folderId);
+    this.contextMenu = null;
+    this.render({ force: true });
+  }
+
+  #onAssetAction(event, action) {
+    event.preventDefault();
+    const asset = this.selectedAsset;
+    if (!asset) return;
+    this.#runAssetAction(asset, action).then(() => this.render({ force: true }));
+  }
+
+  async #runAssetAction(asset, action, folderId = "") {
     if (action === "rename") {
-      const name = window.prompt("Nouveau nom virtuel", asset.displayName || asset.name);
-      if (name !== null) await FXLibraryManager.renameAsset(asset.path, name, asset.sourceId, asset.sourceEnabled);
-    } else if (action === "favorite") {
-      await FXLibraryManager.toggleFavorite(asset.path, asset.sourceId, asset.sourceEnabled);
-    } else if (action === "move") {
-      const folders = this.library.folders.map((folder) => `${folder.id}: ${folder.name}`).join("\n");
-      const folderId = window.prompt(`Dossier cible (laisser vide pour retirer):\n${folders}`, asset.virtualFolderId || "");
-      if (folderId !== null) await FXLibraryManager.moveAsset(asset.path, folderId, asset.sourceId, asset.sourceEnabled);
+      this.formState = { type: "asset-rename", title: "Renommer l'effet", assetId: asset.id, name: asset.displayName || asset.name, isNameForm: true };
+      return;
     }
-
+    if (action === "favorite") await FXLibraryManager.toggleFavorite(asset.path, asset.sourceId, asset.sourceEnabled);
+    if (action === "move") await FXLibraryManager.moveAsset(asset.path, folderId, asset.sourceId, asset.sourceEnabled);
+    if (action === "remove-folder") await FXLibraryManager.moveAsset(asset.path, "", asset.sourceId, asset.sourceEnabled);
+    if (action === "copy-path") await game.clipboard?.copyPlainText?.(asset.path);
+    if (action === "preview") this.selectedAsset = asset;
+    if (action === "add-tab") this.formState = { type: "asset-move", title: "Ajouter a un onglet", assetId: asset.id, isMove: true, folders: this.library.folders };
     this.#refreshLibrary();
-    await this.#renderAssetList();
   }
 
-  async #onFolderContextMenu(event) {
+  async #onInternalFormSubmit(event) {
     event.preventDefault();
-    event.stopPropagation();
-    const folderId = event.target?.closest?.("[data-folder-filter]")?.dataset?.folderFilter ?? "";
-    const action = window.prompt("Action dossier: new, rename, delete", folderId ? "rename" : "new");
-    if (!action) return;
+    const data = new FormData(event.currentTarget);
+    const type = this.formState?.type;
 
-    if (action === "new") {
-      const name = window.prompt("Nom du dossier virtuel", "Nouveau dossier");
-      if (name !== null) await FXLibraryManager.createFolder(name);
-    } else if (action === "rename" && folderId) {
-      const folder = this.library.folders.find((item) => item.id === folderId);
-      const name = window.prompt("Nouveau nom du dossier", folder?.name ?? "");
-      if (name !== null) await FXLibraryManager.renameFolder(folderId, name);
-    } else if (action === "delete" && folderId) {
-      await FXLibraryManager.deleteFolder(folderId);
-      if (this.folderFilter === folderId) {
-        this.folderFilter = "";
-        this.specialFilter = "all";
-      }
+    if (type === "source") {
+      await FXOriginVaultSources.addSource({ name: data.get("name"), path: data.get("path"), enabled: true });
+      this.assets = await FXAssetScanner.scan({ notifyResult: false });
+    }
+    if (type === "folder-create") await FXLibraryManager.createFolder(data.get("name"));
+    if (type === "folder-rename") await FXLibraryManager.renameFolder(this.formState.folderId, data.get("name"));
+    if (type === "asset-rename") {
+      const asset = this.library.assets.find((item) => item.id === this.formState.assetId);
+      if (asset) await FXLibraryManager.renameAsset(asset.path, data.get("name"), asset.sourceId, asset.sourceEnabled);
+    }
+    if (type === "asset-move") {
+      const asset = this.library.assets.find((item) => item.id === this.formState.assetId);
+      if (asset) await FXLibraryManager.moveAsset(asset.path, data.get("folderId"), asset.sourceId, asset.sourceEnabled);
     }
 
+    this.formState = null;
+    this.#refreshLibrary();
     this.render({ force: true });
   }
 

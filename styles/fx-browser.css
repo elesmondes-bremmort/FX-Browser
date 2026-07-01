@@ -15,6 +15,7 @@
 }
 
 .fx-browser-shell {
+  position: relative;
   height: 100%;
   min-height: 520px;
   display: grid;
@@ -112,6 +113,26 @@
   gap: 4px;
 }
 
+.fx-browser-tab-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 30px 30px;
+  gap: 4px;
+  align-items: center;
+}
+
+.fx-browser-tab-row button:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-browser-tab-row button:not(:first-child) {
+  min-height: 30px;
+  padding: 0;
+  text-align: center;
+}
+
 .fx-browser-source-row {
   min-width: 0;
   display: grid;
@@ -138,6 +159,15 @@
 .fx-browser-source-row .fx-browser-source-main span {
   display: block;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-browser-source-row .fx-browser-source-main small {
+  display: block;
+  overflow: hidden;
+  color: var(--fx-muted);
+  font-size: 10.5px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -174,6 +204,162 @@
   margin: auto;
   color: var(--fx-muted);
   font-size: 15px;
+}
+
+.fx-browser-context-menu {
+  position: absolute;
+  z-index: 20;
+  width: 220px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--fx-text);
+  background: #171310;
+  border: 1px solid var(--fx-gold-soft);
+  border-radius: 6px;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 45%);
+}
+
+.fx-browser-context-menu button {
+  min-height: 28px;
+  padding: 4px 8px;
+  color: var(--fx-text);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.fx-browser-context-menu button:hover {
+  color: #16110b;
+  background: var(--fx-gold);
+}
+
+.fx-browser-context-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 0;
+  border-top: 1px solid rgb(215 180 95 / 18%);
+  border-bottom: 1px solid rgb(215 180 95 / 18%);
+}
+
+.fx-browser-context-group span {
+  padding: 0 8px 2px;
+  color: var(--fx-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.fx-browser-form-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(0 0 0 / 48%);
+}
+
+.fx-browser-inline-form {
+  width: min(380px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  color: var(--fx-text);
+  background: #1a1613;
+  border: 1px solid var(--fx-gold-soft);
+  border-radius: 8px;
+  box-shadow: 0 16px 44px rgb(0 0 0 / 55%);
+}
+
+.fx-browser-inline-form h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.fx-browser-inline-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fx-browser-inline-form label span {
+  color: var(--fx-muted);
+  font-size: 12px;
+}
+
+.fx-browser-inline-form input,
+.fx-browser-inline-form select {
+  min-height: 32px;
+  color: var(--fx-text);
+  background: #0f0e0d;
+  border: 1px solid #4b3b23;
+  border-radius: 5px;
+}
+
+.fx-browser-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.fx-browser-form-actions button,
+.fx-browser-asset-actions button {
+  min-height: 30px;
+  color: var(--fx-text);
+  background: var(--fx-panel-soft);
+  border: 1px solid #5c4726;
+  border-radius: 6px;
+}
+
+.fx-browser-form-actions button[type="submit"] {
+  color: #16110b;
+  background: var(--fx-gold);
+  border-color: var(--fx-gold);
+}
+
+.fx-browser-asset-details {
+  margin-top: 10px;
+  padding: 10px;
+  background: #1d1916;
+  border: 1px solid rgb(215 180 95 / 18%);
+  border-radius: 6px;
+}
+
+.fx-browser-asset-details h2 {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.fx-browser-asset-details dl {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 5px 8px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.fx-browser-asset-details dt {
+  color: var(--fx-muted);
+}
+
+.fx-browser-asset-details dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx-browser-asset-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 @media (max-width: 900px) {

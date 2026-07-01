@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.12
+
+- Simplify the main library navigation around virtual tabs: ALL, FAVORIS, and GM-created folders.
+- Move Origin Vault source management behind a discreet Sources panel while keeping scans and source counts available.
+- Replace browser prompts with an internal dark/gold context menu and inline forms for asset and folder organization.
+- Expand the selected asset detail panel with original name, category, source, favorite state, virtual tabs, path, and quick actions.
+
 ## 0.0.11
 
 - Separate top-bar asset search from source management and show precise empty states for missing libraries, unscanned sources, and no search matches.

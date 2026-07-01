@@ -4,6 +4,10 @@
       <i class="fa-solid fa-magnifying-glass"></i>
       <input type="search" data-search value="{{query}}" placeholder="{{localize 'fx-browser.search.placeholder'}}" autocomplete="off">
     </div>
+    <button type="button" data-source-panel-toggle>
+      <i class="fa-solid fa-gear"></i>
+      Sources
+    </button>
     <button type="button" data-action="rescan">
       <i class="fa-solid fa-rotate"></i>
       {{localize "fx-browser.actions.rescan"}}
@@ -11,65 +15,54 @@
   </header>
 
   <div class="fx-browser-content">
-    <nav class="fx-browser-categories" aria-label="{{localize 'fx-browser.categories.label'}}">
+    <nav class="fx-browser-categories" aria-label="FX Browser tabs">
       <div class="fx-browser-nav-section">
-        <h2>Bibliotheque</h2>
-        <button type="button" class="{{#if librarySections.all}}active{{/if}}" data-special-filter="all">Toutes les sources</button>
-        <button type="button" class="{{#if librarySections.favorites}}active{{/if}}" data-special-filter="favorites">Favoris</button>
-        <button type="button" class="{{#if librarySections.personal}}active{{/if}}" data-special-filter="personal">Mes FX</button>
+        <button type="button" class="{{#if tabs.all}}active{{/if}}" data-special-filter="all">ALL</button>
+        <button type="button" class="{{#if tabs.favorites}}active{{/if}}" data-special-filter="favorites">FAVORIS</button>
+        <button type="button" data-folder-create>+ Onglet</button>
       </div>
 
-      <div class="fx-browser-nav-section fx-browser-source-manager">
-        <h2>Sources</h2>
-        {{#unless originVaultAvailable}}
-          <p>Origin Vault absent ou inactif. Les sources manuelles restent disponibles.</p>
-        {{/unless}}
-        <div class="fx-browser-source-actions">
-          <button type="button" data-source-add>Ajouter</button>
-          <button type="button" data-source-rescan>Rescanner</button>
-        </div>
-        {{#each configuredSources}}
-          <div class="fx-browser-source-row">
-            <input type="checkbox" title="Activer / desactiver" data-source-toggle="{{id}}" {{#if enabled}}checked{{/if}}>
-            <button type="button" class="fx-browser-source-main {{#if active}}active{{/if}}" data-source-filter="{{id}}" title="{{path}}">
-              <span>Origin Vault - {{name}}</span>
-              <small>{{path}}</small>
+      <div class="fx-browser-nav-section">
+        {{#each tabs.folders}}
+          <div class="fx-browser-tab-row">
+            <button type="button" class="{{#if active}}active{{/if}}" data-folder-filter="{{id}}">
+              {{name}}
             </button>
-            <span class="fx-browser-source-count">{{count}} FX</span>
-            <button type="button" class="fx-browser-source-remove" title="Retirer" data-source-remove="{{id}}">
+            <button type="button" title="Renommer" data-folder-rename="{{id}}">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button type="button" title="Supprimer" data-folder-delete="{{id}}">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
         {{/each}}
       </div>
 
-      <div class="fx-browser-nav-section" data-folder-list>
-        <h2>Dossiers personnels</h2>
-        {{#each folders}}
-          <button type="button" class="{{#if active}}active{{/if}}" data-folder-filter="{{id}}">
-            {{name}}
-          </button>
-        {{/each}}
-      </div>
-
-      <div class="fx-browser-nav-section">
-        <h2>Sources detectees</h2>
-        {{#each sources}}
-          <button type="button" class="{{#if active}}active{{/if}}" data-source-filter="{{id}}" title="{{path}}">
-            <span>{{name}}</span>
-            <small>{{path}} - {{count}}</small>
-          </button>
-        {{/each}}
-      </div>
-
-      <div class="fx-browser-nav-section">
-        <h2>Categories</h2>
-        {{#each categories}}
-          <button type="button" class="{{#if active}}active{{/if}}" data-action="selectCategory" data-category="{{id}}">
-            {{label}}
-          </button>
-        {{/each}}
-      </div>
+      {{#if showSources}}
+        <div class="fx-browser-nav-section fx-browser-source-manager">
+          <h2>Sources Origin Vault</h2>
+          {{#unless originVaultAvailable}}
+            <p>Origin Vault absent ou inactif. Les sources manuelles restent disponibles.</p>
+          {{/unless}}
+          <div class="fx-browser-source-actions">
+            <button type="button" data-source-add>Ajouter</button>
+            <button type="button" data-source-rescan>Rescanner</button>
+          </div>
+          {{#each configuredSources}}
+            <div class="fx-browser-source-row">
+              <input type="checkbox" title="Activer / desactiver" data-source-toggle="{{id}}" {{#if enabled}}checked{{/if}}>
+              <div class="fx-browser-source-main" title="{{path}}">
+                <span>Origin Vault - {{name}}</span>
+                <small>{{path}}</small>
+              </div>
+              <span class="fx-browser-source-count">{{count}} FX</span>
+              <button type="button" class="fx-browser-source-remove" title="Retirer" data-source-remove="{{id}}">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          {{/each}}
+        </div>
+      {{/if}}
     </nav>
 
     <main class="fx-browser-grid" aria-live="polite">
@@ -84,10 +77,89 @@
 
     <aside class="fx-browser-preview-panel">
       <div data-preview></div>
+
+      {{#if selectedAsset}}
+        <section class="fx-browser-asset-details">
+          <h2>{{selectedAsset.displayName}}</h2>
+          <dl>
+            <dt>Nom original</dt><dd>{{selectedAsset.originalName}}</dd>
+            <dt>Categorie</dt><dd>{{selectedAsset.categoryLabel}}</dd>
+            <dt>Source</dt><dd>{{selectedAsset.sourceName}}</dd>
+            <dt>Favori</dt><dd>{{selectedAsset.favoriteLabel}}</dd>
+            <dt>Onglets</dt><dd>{{selectedAsset.folderNames}}</dd>
+            <dt>Chemin</dt><dd title="{{selectedAsset.path}}">{{selectedAsset.path}}</dd>
+          </dl>
+          <div class="fx-browser-asset-actions">
+            <button type="button" data-asset-action="rename">Renommer</button>
+            <button type="button" data-asset-action="favorite">Favori</button>
+            <button type="button" data-asset-action="add-tab">Ajouter a onglet</button>
+            <button type="button" data-asset-action="copy-path">Copier chemin</button>
+          </div>
+        </section>
+      {{/if}}
+
       {{> "modules/fx-browser/templates/overlay-list.hbs"}}
       {{> "modules/fx-browser/templates/overlay-controls.hbs"}}
     </aside>
   </div>
+
+  {{#if contextMenu}}
+    <div class="fx-browser-context-menu" style="left: {{contextMenu.x}}px; top: {{contextMenu.y}}px;">
+      <button type="button" data-context-action="rename">Renommer</button>
+      <button type="button" data-context-action="favorite">
+        {{#if contextMenu.isFavorite}}Retirer des favoris{{else}}Ajouter aux favoris{{/if}}
+      </button>
+      <div class="fx-browser-context-group">
+        <span>Ajouter a un onglet</span>
+        {{#each contextMenu.folders}}
+          <button type="button" data-context-action="move" data-folder-id="{{id}}">{{name}}</button>
+        {{/each}}
+      </div>
+      {{#if contextMenu.hasCurrentFolder}}
+        <button type="button" data-context-action="remove-folder">Retirer de cet onglet</button>
+      {{/if}}
+      <button type="button" data-context-action="copy-path">Copier chemin</button>
+      <button type="button" data-context-action="preview">Previsualiser</button>
+    </div>
+  {{/if}}
+
+  {{#if formState}}
+    <div class="fx-browser-form-backdrop">
+      <form class="fx-browser-inline-form" data-fx-form>
+        <h2>{{formState.title}}</h2>
+        {{#if formState.isSource}}
+          <label>
+            <span>Nom</span>
+            <input name="name" type="text" value="{{formState.name}}">
+          </label>
+          <label>
+            <span>Chemin / identifiant</span>
+            <input name="path" type="text" value="{{formState.path}}">
+          </label>
+        {{/if}}
+        {{#if formState.isNameForm}}
+          <label>
+            <span>Nom</span>
+            <input name="name" type="text" value="{{formState.name}}">
+          </label>
+        {{/if}}
+        {{#if formState.isMove}}
+          <label>
+            <span>Onglet</span>
+            <select name="folderId">
+              {{#each formState.folders}}
+                <option value="{{id}}">{{name}}</option>
+              {{/each}}
+            </select>
+          </label>
+        {{/if}}
+        <div class="fx-browser-form-actions">
+          <button type="submit">Valider</button>
+          <button type="button" data-form-cancel>Annuler</button>
+        </div>
+      </form>
+    </div>
+  {{/if}}
 
   <footer class="fx-browser-placement">
     <label>
