@@ -5,51 +5,9 @@
       <i class="fa-solid fa-trash"></i>
       Supprimer tous les FX de la scene
     </button>
-    <button type="button" data-light-delete-orphans>
-      <i class="fa-solid fa-lightbulb"></i>
-      Supprimer les lumieres FX orphelines
+    <button type="button" data-cleanup-remnants>
+      <i class="fa-solid fa-broom"></i>
+      Nettoyer les restes FX
     </button>
   </div>
-  {{#if showSceneFx}}
-    <div class="fx-browser-scene-fx-actions">
-      <button type="button" data-scene-fx-normal-all>Tout remettre Normal</button>
-      <button type="button" data-scene-fx-hide-all>Tout masquer</button>
-      <button type="button" data-scene-fx-show-all>Tout afficher</button>
-    </div>
-    {{#if sceneFx.hasItems}}
-      <div class="fx-browser-scene-fx-list">
-        {{#each sceneFx.items}}
-          <article class="fx-browser-scene-fx-row {{#if selected}}selected{{/if}}">
-            <button type="button" class="fx-browser-scene-fx-preview" title="{{assetPath}}" data-scene-fx-select="{{id}}">
-              <video src="{{assetPath}}" muted playsinline preload="metadata"></video>
-            </button>
-            <button type="button" class="fx-browser-scene-fx-main" data-scene-fx-select="{{id}}">
-              <strong>{{name}}</strong>
-              <span>{{modeLabel}} - sort {{sort}} - elevation {{elevation}}</span>
-            </button>
-            <label class="fx-browser-scene-fx-visible">
-              <input type="checkbox" data-scene-fx-visible="{{id}}" {{#if visible}}checked{{/if}}>
-              <span>Visible</span>
-            </label>
-            <div class="fx-browser-scene-fx-buttons">
-              <button type="button" title="Selectionner" data-scene-fx-select="{{id}}">
-                <i class="fa-solid fa-crosshairs"></i>
-              </button>
-              <button type="button" title="Mode Normal" data-scene-fx-mode="{{id}}" data-mode="normal">
-                N
-              </button>
-              <button type="button" title="Premier plan" data-scene-fx-mode="{{id}}" data-mode="foreground">
-                P
-              </button>
-              <button type="button" class="fx-browser-danger" title="Supprimer" data-scene-fx-delete="{{id}}">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </article>
-        {{/each}}
-      </div>
-    {{else}}
-      <p>Aucun FX sur cette scene.</p>
-    {{/if}}
-  {{/if}}
 </section>

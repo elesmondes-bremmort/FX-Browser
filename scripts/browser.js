@@ -40,16 +40,12 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.specialFilter = "all";
     this.query = "";
     this.showSources = false;
-    this.showSceneFx = false;
-    this.selectedSceneFxId = null;
     this.contextMenu = null;
     this.formState = null;
     this.preview = null;
     this.searchDebounce = null;
-    this.boundSceneFxKeyDown = (event) => this.#onSceneFxKeyDown(event);
     this.dragDrop = new FXDragDrop((id) => this.library.assets.find((asset) => asset.id === id));
     this.dragDrop.bindCanvasDrop();
-    document.addEventListener("keydown", this.boundSceneFxKeyDown);
   }
 
   async _prepareContext() {
@@ -61,11 +57,9 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       configuredSources: this.#getConfiguredSourceContext(),
       originVaultAvailable: FXOriginVaultSources.isAvailable(),
       showSources: this.showSources,
-      showSceneFx: this.showSceneFx,
       contextMenu: this.#getContextMenuContext(),
       formState: this.formState,
       assets: this.filteredAssets,
-      sceneFx: this.#getSceneFxContext(),
       selectedAsset: this.#getSelectedAssetContext(),
       folders: this.library.folders,
       placement: FXBrowserSettings.getPlacement(),
@@ -83,23 +77,7 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     this.preview.activateListeners();
 
     root.querySelector("[data-overlay-delete-all]")?.addEventListener("click", () => this.#confirmDeleteAllOverlays());
-    root.querySelector("[data-light-delete-orphans]")?.addEventListener("click", () => this.#confirmDeleteOrphanLights());
-    root.querySelector("[data-scene-fx-toggle]")?.addEventListener("click", () => {
-      this.showSceneFx = !this.showSceneFx;
-      this.render({ force: true });
-    });
-    root.querySelector("[data-scene-fx-normal-all]")?.addEventListener("click", async () => {
-      await FXOverlayManager.setAllOverlaysMode("normal");
-      this.render({ force: true });
-    });
-    root.querySelector("[data-scene-fx-hide-all]")?.addEventListener("click", async () => {
-      await FXOverlayManager.setAllOverlaysVisibility(false);
-      this.render({ force: true });
-    });
-    root.querySelector("[data-scene-fx-show-all]")?.addEventListener("click", async () => {
-      await FXOverlayManager.setAllOverlaysVisibility(true);
-      this.render({ force: true });
-    });
+    root.querySelector("[data-cleanup-remnants]")?.addEventListener("click", () => this.#confirmCleanupRemnants());
 
     root.addEventListener("click", (event) => {
       if (!event.target.closest(".fx-browser-context-menu")) this.#closeContextMenu();
@@ -203,18 +181,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       input.addEventListener("input", () => this.#savePlacement(root));
     });
 
-    root.querySelectorAll("[data-scene-fx-select]").forEach((button) => {
-      button.addEventListener("click", () => this.#selectSceneFx(button.dataset.sceneFxSelect));
-    });
-    root.querySelectorAll("[data-scene-fx-delete]").forEach((button) => {
-      button.addEventListener("click", () => this.#deleteSceneFx(button.dataset.sceneFxDelete));
-    });
-    root.querySelectorAll("[data-scene-fx-mode]").forEach((button) => {
-      button.addEventListener("click", () => this.#setSceneFxMode(button.dataset.sceneFxMode, button.dataset.mode));
-    });
-    root.querySelectorAll("[data-scene-fx-visible]").forEach((input) => {
-      input.addEventListener("change", () => this.#setSceneFxVisibility(input.dataset.sceneFxVisible, input.checked));
-    });
   }
 
   #activateHoverPreview(card) {
@@ -264,7 +230,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   async close(options) {
     window.clearTimeout(this.searchDebounce);
-    document.removeEventListener("keydown", this.boundSceneFxKeyDown);
     this.dragDrop.unbindCanvasDrop();
     await this.#saveWindowState();
     FXBrowserApp.instance = null;
@@ -291,7 +256,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     await FXBrowserSettings.setPlacement({
       width: clampNumber(get("width")?.value, 0.25, 20, 2),
       height: clampNumber(get("height")?.value, 0.25, 20, 2),
-      alpha: clampNumber(get("alpha")?.value, 0, 1, 1),
       rotation: clampNumber(get("rotation")?.value, -360, 360, 0),
       loop: Boolean(get("loop")?.checked),
       name: get("name")?.value ?? ""
@@ -316,10 +280,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
 
   static async #onRescan() {
     await this.#rescanLibrary();
-  }
-
-  refreshSceneFxPanel() {
-    if (this.showSceneFx && this.rendered) this.render({ force: true });
   }
 
   #refreshLibrary() {
@@ -382,53 +342,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
       favoriteLabel: asset.favorite ? "Oui" : "Non",
       folderNames: this.library.folders.filter((folder) => folder.id === asset.virtualFolderId).map((folder) => folder.name).join(", ") || "Aucun"
     };
-  }
-
-  #getSceneFxContext() {
-    const items = FXOverlayManager.getSceneFx();
-    if (this.selectedSceneFxId && !items.some((fx) => fx.id === this.selectedSceneFxId)) this.selectedSceneFxId = null;
-    return {
-      items: items.map((fx) => ({
-        ...fx,
-        selected: fx.id === this.selectedSceneFxId,
-        isForeground: fx.mode === "foreground"
-      })),
-      hasItems: items.length > 0
-    };
-  }
-
-  #selectSceneFx(id) {
-    if (!id) return;
-    this.selectedSceneFxId = id;
-    FXOverlayManager.panToOverlay(id);
-    this.render({ force: true });
-  }
-
-  async #deleteSceneFx(id) {
-    if (!id) return;
-    await FXOverlayManager.deleteOverlay(id);
-    if (this.selectedSceneFxId === id) this.selectedSceneFxId = null;
-    this.render({ force: true });
-  }
-
-  async #setSceneFxMode(id, mode) {
-    if (!id) return;
-    await FXOverlayManager.setOverlayMode(id, mode);
-    this.render({ force: true });
-  }
-
-  async #setSceneFxVisibility(id, visible) {
-    if (!id) return;
-    await FXOverlayManager.setOverlayVisibility(id, visible);
-    this.render({ force: true });
-  }
-
-  async #onSceneFxKeyDown(event) {
-    if (!this.rendered || !this.showSceneFx || !this.selectedSceneFxId) return;
-    if (!["Delete", "Del"].includes(event.key) && event.code !== "Delete") return;
-    if (this.#isTextInput(event.target)) return;
-    event.preventDefault();
-    await this.#deleteSceneFx(this.selectedSceneFxId);
   }
 
   #openContextMenu(event, asset) {
@@ -528,15 +441,15 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
     await FXOverlayManager.deleteAllOverlays();
   }
 
-  async #confirmDeleteOrphanLights() {
+  async #confirmCleanupRemnants() {
     const confirmed = await this.#confirmDialog({
-      title: "Supprimer les lumieres FX orphelines",
-      content: "<p>Supprimer les anciennes lumieres FX generees par l'experimentation V0.0.18 ?</p>",
-      yes: "Supprimer",
+      title: "Nettoyer les restes FX",
+      content: "<p>Supprimer uniquement les anciennes donnees experimentales FX ?</p>",
+      yes: "Nettoyer",
       no: "Annuler"
     });
     if (!confirmed) return;
-    await FXOverlayManager.deleteOrphanGeneratedLights();
+    await FXOverlayManager.cleanupExperimentRemnants();
   }
 
   async #confirmDialog({ title, content, yes, no }) {
@@ -560,13 +473,6 @@ export class FXBrowserApp extends foundry.applications.api.HandlebarsApplication
         defaultYes: false
       });
     });
-  }
-
-  #isTextInput(target) {
-    const element = target instanceof HTMLElement ? target : null;
-    if (!element) return false;
-    if (element.isContentEditable) return true;
-    return ["INPUT", "TEXTAREA", "SELECT"].includes(element.tagName);
   }
 
   static async toggle() {

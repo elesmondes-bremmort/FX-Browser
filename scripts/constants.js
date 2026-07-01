@@ -28,13 +28,10 @@ export const DEFAULT_WINDOW_STATE = {
 export const DEFAULT_PLACEMENT = {
   width: 2,
   height: 2,
-  alpha: 1,
   rotation: 0,
   loop: true,
   visible: true,
   locked: false,
-  elevation: 10,
-  zIndex: 10,
   name: ""
 };
 

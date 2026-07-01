@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.21
+
+- Revert the Scene FX manager, foreground mode, and high `sort`/`elevation` controls.
+- Restore the stable native Tile-only FX workflow with `sort = 1` and `elevation = 1`.
+- Keep only emergency cleanup actions for deleting all FX Tiles, removing legacy generated lights, and normalizing old foreground remnants.
+
 ## 0.0.20
 
 - Add a Scene FX manager panel for native FX Tiles, opened from the FX Browser toolbar.
